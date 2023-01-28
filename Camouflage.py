@@ -1,7 +1,7 @@
 import streamlit as st
 from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
-from camouflage.color_match_utils import check_match, names
+from camouflage.color_match_utils import check_match
 import logging
 from streamlit_image_select import image_select
 import numpy as np
@@ -17,8 +17,6 @@ with col1:
     st.image("images/logo.png")
 with col2:
     st.markdown("# Welcome to Camouflage!")
-
-st.write(names)
 
 st.markdown("## Clothing Item 1")
 image_1 = st.camera_input("image-1", label_visibility="hidden")
@@ -56,13 +54,14 @@ if image_1 and image_2:
 
     with st.spinner("Checking for a match..."):
         try:
-            is_match = check_match(colors_1, colors_2)
+            matches = check_match(colors_1, colors_2)
         except Exception as e:
             logger.info(f"Error - Match - {e}")
             st.error("Unable to check a match. Please try again.")
             st.stop()
         
-        if is_match:
+        st.write(matches)
+        if len(matches) > 0:
             st.markdown("It's a match!")
         else:
             st.markdown("It's not a match :(")
