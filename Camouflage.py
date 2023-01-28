@@ -1,5 +1,7 @@
 import streamlit as st
-from camouflage import extract_clothes, colors, check_match
+from camouflage.image_utils import extract_clothes
+from camouflage.image_color_utils import colors
+from camouflage.color_match_utils import check_match, names
 import logging
 from streamlit_image_select import image_select
 import numpy as np
@@ -15,6 +17,8 @@ with col1:
     st.image("images/logo.png")
 with col2:
     st.markdown("# Welcome to Camouflage!")
+
+st.write(names)
 
 st.markdown("## Clothing Item 1")
 image_1 = st.camera_input("image-1", label_visibility="hidden")
