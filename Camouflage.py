@@ -34,8 +34,10 @@ if image_1 and image_2:
             logger.info(f"Error - Extraction - {e}")
             st.error("Unable to extract clothes. Please try again.")
             st.stop()
-        clothing_image_1 = image_select("Choose Image 1", [np.array(img) for img in clothing_images_1], use_container_width=False)
-        clothing_image_2 = image_select("Choose Image 2", [np.array(img) for img in clothing_images_2], use_container_width=False)
+        st.markdown("## Choose Image 1")
+        clothing_image_1 = image_select("", [np.array(img) for img in clothing_images_1], use_container_width=False)
+        st.markdown("## Choose Image 2")
+        clothing_image_2 = image_select("", [np.array(img) for img in clothing_images_2], use_container_width=False)
         
     with st.spinner("Extracting Colors..."):
         try:
@@ -46,10 +48,10 @@ if image_1 and image_2:
             st.error("Unable to extract colors. Please try again.")
             st.stop()
 
-        st.markdown("## Image 1")
+        st.markdown("## Colors From Image 1")
         st.image(rect_colors_1)
 
-        st.markdown("## Image 2")
+        st.markdown("## Colors From Image 2")
         st.image(rect_colors_2)
 
     with st.spinner("Checking for a match..."):
@@ -60,8 +62,10 @@ if image_1 and image_2:
             st.error("Unable to check a match. Please try again.")
             st.stop()
         
-        st.write(matches)
+        st.markdown("## This outfit is...")
+        st.markdown(", ".join(matches))
+
         if len(matches) > 0:
-            st.markdown("It's a match!")
+            st.markdown("### It's a match!")
         else:
-            st.markdown("It's not a match :(")
+            st.markdown("### It's not a match :(")
