@@ -315,8 +315,8 @@ def GetValidMatches(outfit):
     """
     
     rules = {"Basic": BasicMatch, "Neutral": NeutralMatch,
-             "Analogous": AnalogousMatch, "Summer": SummerMatch,
-            "Winter": WinterMatch}
+             "Analogous": AnalogousMatch, "Contrast": ContrastMatch, # I added Contrast
+             "Summer": SummerMatch, "Winter": WinterMatch}
     valid_matches = []
     for key in rules:
         if rules[key](outfit):
