@@ -13,7 +13,6 @@ def visualize_Dominant_colors(cluster, C_centroids):
     img_colors = sorted([(percent, color) for (percent, color) in zip(C_hist, C_centroids)])
     start = 0
     for (percent, color) in img_colors:
-        print(color, "{:0.2f}%".format(percent * 100))
         end = start + (percent * 300)
         cv2.rectangle(rect_color, (int(start), 0), (int(end), 50), \
                       color.astype("uint8").tolist(), -1)

@@ -6,6 +6,10 @@ import logging
 from streamlit_image_select import image_select
 import numpy as np
 
+# TODO: Build docker conatiner
+# TODO: Normalize HSV values before categorizing colors
+# TODO: Deploy on google app engine
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level='info',
@@ -56,7 +60,8 @@ if image_1 and image_2:
 
     with st.spinner("Checking for a match..."):
         try:
-            matches = check_match(colors_1, colors_2)
+            outfit_colors = (colors_1, colors_2)
+            matches = check_match(outfit_colors)
         except Exception as e:
             logger.info(f"Error - Match - {e}")
             st.error("Unable to check a match. Please try again.")
