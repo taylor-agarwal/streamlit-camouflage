@@ -31,9 +31,14 @@ def extract_clothes(image_bytes):
             clothing_image = original[y:y+h, x:x+w]
             clothing_images.append(clothing_image)
     
-    # Check if the original is already in the images
-    if any([np.array_equal(original, image) for image in clothing_images]):
-        return clothing_images
+    # Keep only cropped images
+    clothing_images = [image for image in clothing_images if not np.array_equal(original, image)]
+
+    # Keep only the largest image
+    clothing_image = clothing_images[0]
+    for image in clothing_images:
+        if image.shape[0]*image.shape[1] > clothing_image.shape[0]*clothing_image.shape[1]:
+            clothing_image = image
 
     # Otherwise return the original with the other images
-    return [original] + clothing_images
+    return [clothing_image, original]
