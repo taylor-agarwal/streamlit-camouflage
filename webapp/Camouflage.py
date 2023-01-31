@@ -3,11 +3,11 @@ from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
 import logging
+import traceback
 from streamlit_image_select import image_select
 import numpy as np
 
 # TODO: Build docker conatiner
-# TODO: Normalize HSV values before categorizing colors
 # TODO: Deploy on google app engine
 
 logger = logging.getLogger(__name__)
@@ -55,6 +55,7 @@ if int(num_images) > 0:
                 clothing_images = [extract_clothes(image) for image in images]
             except Exception as e:
                 logger.info(f"Error - Extraction - {e}")
+                logger.info(''.join(traceback.format_tb(e.__traceback__)))
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
             
@@ -71,6 +72,7 @@ if int(num_images) > 0:
 
             except Exception as e:
                 logger.info(f"Error - Colors - {e}")
+                logger.info(''.join(traceback.format_tb(e.__traceback__)))
                 st.error("Unable to extract colors. Please try again.")
                 st.stop()
 
@@ -88,6 +90,7 @@ if int(num_images) > 0:
                 matches = check_match(outfit_colors)
             except Exception as e:
                 logger.info(f"Error - Match - {e}")
+                logger.info(''.join(traceback.format_tb(e.__traceback__)))
                 st.error("Unable to check a match. Please try again.")
                 st.stop()
             
