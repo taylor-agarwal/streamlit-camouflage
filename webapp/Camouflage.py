@@ -7,14 +7,19 @@ import traceback
 from streamlit_image_select import image_select
 import numpy as np
 
-# TODO: Build docker conatiner
-# TODO: Deploy on google app engine
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level='info',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+hide_footer_style = """
+    <style>
+    footer {visibility: hidden;} 
+    #MainMenu {visibility: hidden;} 
+    </style>  
+"""
+st.markdown(hide_footer_style, unsafe_allow_html=True)
 
 _, col, _ = st.columns(3)
 
