@@ -1,9 +1,11 @@
+import logging
+
+import numpy as np
 import streamlit as st
+
 from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
-import logging
-import numpy as np
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
