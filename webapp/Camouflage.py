@@ -3,8 +3,6 @@ from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
 import logging
-import traceback
-from streamlit_image_select import image_select
 import numpy as np
 
 logger = logging.getLogger(__name__)
@@ -66,15 +64,26 @@ if int(num_images) > 0:
             
             chosen_clothing_images = []
             for i, image_pair in enumerate(clothing_images):
-                cropped, original = image_pair
                 st.subheader(f"From Item {i+1}")
-                chosen_clothing_image = image_select("", [np.array(cropped), np.array(original)], use_container_width=False, captions=["Cropped", "Original"])
-                chosen_clothing_images.append(chosen_clothing_image)
+
+                if "cropped" in image_pair:
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.image(np.array(image_pair["cropped"]), caption="Cropped")
+                    with col2:
+                        st.image(np.array(image_pair["original"]), caption="Original")
+
+                    choice = st.radio(f"choice_{i}", options=["Cropped", "Original"], horizontal=True, label_visibility="hidden")
+                else:
+                    st.image(np.array(image_pair["original"]), caption="Original")
+                    st.warning("Unable to crop image. Continuing using original image...")
+
+                chosen_clothing_images.append(image_pair[choice.lower()])
 
         with st.spinner("Extracting Colors..."):
             try:
                 clothing_colors = [colors(image) for image in chosen_clothing_images]
-
             except Exception as e:
                 logger.exception(f"Error - Colors")
                 logger.info(str(e))
