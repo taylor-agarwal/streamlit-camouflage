@@ -59,8 +59,8 @@ if int(num_images) > 0:
             try:
                 clothing_images = [extract_clothes(image) for image in images]
             except Exception as e:
-                logger.info(f"Error - Extraction - {e}")
-                logger.info(''.join(traceback.format_tb(e.__traceback__)))
+                logger.exception(f"Error - Extraction")
+                logger.info(str(e))
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
             
@@ -76,8 +76,8 @@ if int(num_images) > 0:
                 clothing_colors = [colors(image) for image in chosen_clothing_images]
 
             except Exception as e:
-                logger.info(f"Error - Colors - {e}")
-                logger.info(''.join(traceback.format_tb(e.__traceback__)))
+                logger.exception(f"Error - Colors")
+                logger.info(str(e))
                 st.error("Unable to extract colors. Please try again.")
                 st.stop()
 
@@ -94,8 +94,8 @@ if int(num_images) > 0:
                 outfit_colors = (colors for colors, _ in clothing_colors)
                 matches = check_match(outfit_colors)
             except Exception as e:
-                logger.info(f"Error - Match - {e}")
-                logger.info(''.join(traceback.format_tb(e.__traceback__)))
+                logger.exception(f"Error - Match")
+                logger.info(str(e))
                 st.error("Unable to check a match. Please try again.")
                 st.stop()
             
