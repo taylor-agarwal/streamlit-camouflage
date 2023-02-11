@@ -1,9 +1,10 @@
 from PIL import Image
 import cv2
 import numpy as np
+from typing import Dict
 
 
-def extract_clothes(image_bytes) -> dict[str, np.ndarray]:
+def extract_clothes(image_bytes) -> Dict[str, np.ndarray]:
     """
     Extracts clothes from the file. Up to 9 clothing items per image, three across and three down
     Args:
