@@ -1,7 +1,0 @@
-build-essential
-curl
-software-properties-common
-git
-ffmpeg
-libsm6
-libxext6
