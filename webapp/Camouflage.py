@@ -13,6 +13,34 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+outfit_descriptions = {
+    "Basic": """
+- No more than one bright color
+- No high contrast between colors (bright warm + dark cool)
+- Any number of neutral colors
+""",
+    "Neutral": """
+- Only neutral colors
+""",
+    "Analogous": """
+- All colors must be within the same temp.
+- Any number of neutral colors
+""",
+    "Contrast": """
+- At least one warm color
+- Both dark and bright colors present
+""",
+    "Summer": """
+- At least two warm colors
+- At least one bright color
+- At most one dark color
+""",
+    "Winter": """
+- At least one dark color
+- No bright colors
+"""
+}
+
 hide_footer_style = """
     <style>
     footer {visibility: hidden;} 
@@ -31,12 +59,14 @@ st.title("Welcome to Camouflage!")
 st.markdown("**How to use this app**")
 
 st.markdown("""
-    First take pictures of the individual clothing items you want to wear against a neutral background.
+    This app will tell you if a set of clothes form a matching outfit.
+    First, take pictures of the clothing items in the outfit individually against a neutral background.
+    You can take pictures of any clothing item, including shirts, pants, shoes, skirts, hats, ties, scarves, etc.
     The app will attempt to trim down the image to crop as close to the clothing item as possible.
     If the image was cropped incorrectly, you can choose to use the original instead.
     The app will then extract the five primary colors from each image.
-    Based on the two most frequent colors, the app will classify the outfit as 'Basic', 'Neutral', 'Analogus', 'Contrast', 'Summer', 'Winter'.
-    See the **About** section for more information about what each classification means.
+    Based on the most frequent color in each item, the app will classify the outfit as 'Basic', 'Neutral', 
+    'Analogus', 'Contrast', 'Summer', and/or 'Winter'.
     If the outfit fits at least one classification then the outfit matches!
 """)
 
@@ -111,7 +141,9 @@ if int(num_images) > 0:
                 st.stop()
             
             st.header("This outfit is...")
-            st.markdown(", ".join(matches))
+            for match in matches:
+                st.subheader(match)
+                st.markdown(outfit_descriptions[match])
 
             if len(matches) > 0:
                 st.header("It's a match!")
