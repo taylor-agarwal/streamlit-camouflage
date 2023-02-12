@@ -1,17 +1,45 @@
+import logging
+
+import numpy as np
 import streamlit as st
+
 from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
-import logging
-import traceback
-from streamlit_image_select import image_select
-import numpy as np
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level='info',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+
+outfit_descriptions = {
+    "Basic": """
+- No more than one bright color
+- No high contrast between colors (bright warm + dark cool)
+- Any number of neutral colors
+""",
+    "Neutral": """
+- Only neutral colors
+""",
+    "Analogous": """
+- All colors must be within the same temp.
+- Any number of neutral colors
+""",
+    "Contrast": """
+- At least one warm color
+- Both dark and bright colors present
+""",
+    "Summer": """
+- At least two warm colors
+- At least one bright color
+- At most one dark color
+""",
+    "Winter": """
+- At least one dark color
+- No bright colors
+"""
+}
 
 hide_footer_style = """
     <style>
@@ -31,12 +59,14 @@ st.title("Welcome to Camouflage!")
 st.markdown("**How to use this app**")
 
 st.markdown("""
-    First take pictures of the individual clothing items you want to wear against a neutral background.
+    This app will tell you if a set of clothes form a matching outfit.
+    First, take pictures of the clothing items in the outfit individually against a neutral background.
+    You can take pictures of any clothing item, including shirts, pants, shoes, skirts, hats, ties, scarves, etc.
     The app will attempt to trim down the image to crop as close to the clothing item as possible.
     If the image was cropped incorrectly, you can choose to use the original instead.
     The app will then extract the five primary colors from each image.
-    Based on the two most frequent colors, the app will classify the outfit as 'Basic', 'Neutral', 'Analogus', 'Contrast', 'Summer', 'Winter'.
-    See the **About** section for more information about what each classification means.
+    Based on the most frequent color in each item, the app will classify the outfit as 'Basic', 'Neutral', 
+    'Analogus', 'Contrast', 'Summer', and/or 'Winter'.
     If the outfit fits at least one classification then the outfit matches!
 """)
 
@@ -59,25 +89,36 @@ if int(num_images) > 0:
             try:
                 clothing_images = [extract_clothes(image) for image in images]
             except Exception as e:
-                logger.info(f"Error - Extraction - {e}")
-                logger.info(''.join(traceback.format_tb(e.__traceback__)))
+                logger.exception(f"Error - Extraction")
+                logger.info(str(e))
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
             
             chosen_clothing_images = []
             for i, image_pair in enumerate(clothing_images):
-                cropped, original = image_pair
                 st.subheader(f"From Item {i+1}")
-                chosen_clothing_image = image_select("", [np.array(cropped), np.array(original)], use_container_width=False, captions=["Cropped", "Original"])
-                chosen_clothing_images.append(chosen_clothing_image)
+
+                if "cropped" in image_pair:
+                    col1, col2 = st.columns(2)
+
+                    with col1:
+                        st.image(np.array(image_pair["cropped"]), caption="Cropped")
+                    with col2:
+                        st.image(np.array(image_pair["original"]), caption="Original")
+
+                    choice = st.radio(f"choice_{i}", options=["Cropped", "Original"], horizontal=True, label_visibility="hidden")
+                else:
+                    st.image(np.array(image_pair["original"]), caption="Original")
+                    st.warning("Unable to crop image. Continuing using original image...")
+
+                chosen_clothing_images.append(image_pair[choice.lower()])
 
         with st.spinner("Extracting Colors..."):
             try:
                 clothing_colors = [colors(image) for image in chosen_clothing_images]
-
             except Exception as e:
-                logger.info(f"Error - Colors - {e}")
-                logger.info(''.join(traceback.format_tb(e.__traceback__)))
+                logger.exception(f"Error - Colors")
+                logger.info(str(e))
                 st.error("Unable to extract colors. Please try again.")
                 st.stop()
 
@@ -94,13 +135,15 @@ if int(num_images) > 0:
                 outfit_colors = (colors for colors, _ in clothing_colors)
                 matches = check_match(outfit_colors)
             except Exception as e:
-                logger.info(f"Error - Match - {e}")
-                logger.info(''.join(traceback.format_tb(e.__traceback__)))
+                logger.exception(f"Error - Match")
+                logger.info(str(e))
                 st.error("Unable to check a match. Please try again.")
                 st.stop()
             
             st.header("This outfit is...")
-            st.markdown(", ".join(matches))
+            for match in matches:
+                st.subheader(match)
+                st.markdown(outfit_descriptions[match])
 
             if len(matches) > 0:
                 st.header("It's a match!")

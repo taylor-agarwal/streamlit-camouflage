@@ -1,9 +1,10 @@
 from PIL import Image
 import cv2
 import numpy as np
+from typing import Dict
 
 
-def extract_clothes(image_bytes):
+def extract_clothes(image_bytes) -> Dict[str, np.ndarray]:
     """
     Extracts clothes from the file. Up to 9 clothing items per image, three across and three down
     Args:
@@ -36,7 +37,7 @@ def extract_clothes(image_bytes):
 
     # If there were no cropped images, return two copies of the original
     if len(clothing_images) == 0:
-        return [original, original]
+        return {"original": original}
 
     # Keep only the largest image
     clothing_image = clothing_images[0]
@@ -45,4 +46,4 @@ def extract_clothes(image_bytes):
             clothing_image = image
 
     # Otherwise return the original with the other images
-    return [clothing_image, original]
+    return {"cropped": clothing_image, "original": original}
