@@ -1,4 +1,6 @@
 import logging
+import traceback
+from hashlib import sha256
 
 import numpy as np
 import streamlit as st
@@ -6,12 +8,6 @@ import streamlit as st
 from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(
-    level='info',
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
 outfit_descriptions = {
     "Basic": """
@@ -40,6 +36,30 @@ outfit_descriptions = {
 - No bright colors
 """
 }
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(
+    level='info',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+if 'session_num' not in st.session_state:
+    id = np.random.randint(1, 999999999)
+    st.session_state['session_num'] = id
+
+def user_activity(message):
+    logger.info(f"{st.session_state['session_num']} - USER - {message}")
+
+def system_activity(message):
+    logger.info(f"{st.session_state['session_num']} - SYSTEM - {message}")
+
+def system_warning(message):
+    logger.warning(f"{st.session_state['session_num']} - SYSTEM - {message}")
+
+def system_error(message):
+    logger.error(f"{st.session_state['session_num']} - SYSTEM - {message}")
+
+system_activity(f"START")
 
 hide_footer_style = """
     <style>
@@ -71,33 +91,39 @@ st.markdown("""
 """)
 
 st.header("Start by picking the how many clothing items you are trying to match")
-num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4])
+num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4], on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
 
 if int(num_images) > 0:
+
+    system_activity(f"NUMBER INPUT - {num_images} items selected")
 
     num_images = int(num_images)
     
     images = []
     for i in range(num_images):
         st.subheader(f"Clothing Item {i+1}")
-        image = st.camera_input(f"image-{i+1}", label_visibility="hidden")
+        image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
         images.append(image)
 
     if not any([image is None for image in images]):
-        logger.info("Images collected")
+        system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
         with st.spinner("Extracting Clothes..."):
-            try:
-                clothing_images = [extract_clothes(image) for image in images]
-            except Exception as e:
-                logger.exception(f"Error - Extraction")
-                logger.info(str(e))
-                st.error("Unable to extract clothes. Please try again.")
-                st.stop()
-            
+            clothing_images = []
+            for i, image in enumerate(images):
+                try:
+                    clothing_images.append(extract_clothes(image))
+                    system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
+                except:
+                    system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images")
+                    system_error(f"CLOTHING EXTRACTION - {i+1} - {str(traceback.extract_tb())}")
+                    st.error("Unable to extract clothes. Please try again.")
+                    st.stop()
+
             chosen_clothing_images = []
             for i, image_pair in enumerate(clothing_images):
                 st.subheader(f"From Item {i+1}")
 
+                system_activity("CHOOSE CLOTHING - {i+1} - Displaying clothing")
                 if "cropped" in image_pair:
                     col1, col2 = st.columns(2)
 
@@ -106,25 +132,40 @@ if int(num_images) > 0:
                     with col2:
                         st.image(np.array(image_pair["original"]), caption="Original")
 
-                    choice = st.radio(f"choice_{i}", options=["Cropped", "Original"], horizontal=True, label_visibility="hidden")
+                    choice = st.radio(
+                        f"choice_{i}", 
+                        options=["Cropped", "Original"], 
+                        horizontal=True, 
+                        label_visibility="hidden", 
+                        on_change=user_activity,
+                        args=(f"CHOOSE CLOTHING - {i+1} - Changed image selection for item",)
+                    )
                 else:
                     st.image(np.array(image_pair["original"]), caption="Original")
                     st.warning("Unable to crop image. Continuing using original image...")
+                    system_warning(f"CHOOSE CLOTHING - {i+1} - Unable to crop image")
+                    choice = "Original"
 
                 chosen_clothing_images.append(image_pair[choice.lower()])
+                system_activity(f"CHOOSE CLOTHING - {i+1} - Chose {choice}")
 
         with st.spinner("Extracting Colors..."):
-            try:
-                clothing_colors = [colors(image) for image in chosen_clothing_images]
-            except Exception as e:
-                logger.exception(f"Error - Colors")
-                logger.info(str(e))
-                st.error("Unable to extract colors. Please try again.")
-                st.stop()
+            clothing_colors = []
+            for i, image in enumerate(chosen_clothing_images):
+                try:
+                    clothing_colors.append(colors(image))
+                    system_activity(f"EXTRACT COLORS - {i+1} - Extracted colors")
+                except:
+                    system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors")
+                    system_error(f"EXTRACT COLORS - {i+1} - {traceback.extract_tb()}")
+                    st.error("Unable to extract colors. Please try again.")
+                    st.stop()
+
 
             st.header("Extracted colors")
 
             for i, color_pair in enumerate(clothing_colors):
+                system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
                 _, rect_colors = color_pair
                 st.subheader(f"Colors From Item {i+1}")
                 st.image(rect_colors)
@@ -134,9 +175,10 @@ if int(num_images) > 0:
             try:
                 outfit_colors = (colors for colors, _ in clothing_colors)
                 matches = check_match(outfit_colors)
+                system_activity(f"MATCHING - Matches found - {matches}")
             except Exception as e:
-                logger.exception(f"Error - Match")
-                logger.info(str(e))
+                system_error(f"MATCHING - Failed to find outfit matching types")
+                system_error(f"MATCHING - {traceback.extract_tb()}")
                 st.error("Unable to check a match. Please try again.")
                 st.stop()
             
@@ -147,5 +189,9 @@ if int(num_images) > 0:
 
             if len(matches) > 0:
                 st.header("It's a match!")
+                system_activity("RESULT - Match")
             else:
                 st.header("It's not a match :(")
+                system_activity("RESULT - No Match")
+
+system_activity("END")
