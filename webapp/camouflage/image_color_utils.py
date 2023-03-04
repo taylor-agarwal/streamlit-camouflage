@@ -24,13 +24,14 @@ def dom_colors(image):
     # To eliminate noise
     n = 4
     
-    height, width, _ = image.shape
+    # height, width, _ = image.shape
     
     # Extract the middle third of the image
-    pixels = image[(height // 3):(2*height // 3),
-                   (width // 3):(2*width // 3),
-                   :]
-    pixels = np.array([pixel for row in pixels for pixel in row])
+    # pixels = image[(height // 3):(2*height // 3),
+    #                (width // 3):(2*width // 3),
+    #                :]
+    print(image)
+    pixels = np.array([pixel for row in image for pixel in row if sum(pixel) != 0])
     
     # Find clusters of colors to determine dominant colors
     color_cluster = KMeans(n_clusters=n, random_state=1).fit(pixels)

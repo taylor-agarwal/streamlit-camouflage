@@ -56,8 +56,9 @@ def system_activity(message):
 def system_warning(message):
     logger.warning(f"{st.session_state['session_num']} - SYSTEM - {message}")
 
-def system_error(message):
+def system_error(message, e):
     logger.error(f"{st.session_state['session_num']} - SYSTEM - {message}")
+    logger.exception(e)
 
 system_activity(f"START")
 
@@ -106,18 +107,16 @@ if int(num_images) > 0:
 
 images_taken = not any([image is None for image in images])
 
-chosen_clothing_images = []
+clothing_images = []
 if images_taken:
     system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
     with st.spinner("Extracting Clothes..."):
-        clothing_images = []
         for i, image in enumerate(images):
             try:
                 clothing_images.append(extract_clothes(image))
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
-            except:
-                system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images")
-                system_error(f"CLOTHING EXTRACTION - {i+1} - {str(traceback.extract_tb())}")
+            except Exception as e:
+                system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images", e)
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
@@ -125,44 +124,24 @@ if images_taken:
         st.subheader(f"From Item {i+1}")
 
         system_activity("CHOOSE CLOTHING - {i+1} - Displaying clothing")
-        if "cropped" in image_pair:
-            col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-            with col1:
-                st.image(np.array(image_pair["cropped"]), caption="Cropped")
-            with col2:
-                st.image(np.array(image_pair["original"]), caption="Original")
-
-            choice = st.radio(
-                f"choice_{i}", 
-                options=["Cropped", "Original"], 
-                horizontal=True, 
-                label_visibility="hidden", 
-                on_change=user_activity,
-                args=(f"CHOOSE CLOTHING - {i+1} - Changed image selection for item",)
-            )
-        else:
+        with col1:
+            st.image(np.array(image_pair["cropped"]), caption="Cropped")
+        with col2:
             st.image(np.array(image_pair["original"]), caption="Original")
-            st.warning("Unable to crop image. Continuing using original image...")
-            system_warning(f"CHOOSE CLOTHING - {i+1} - Unable to crop image")
-            choice = "Original"
 
-        chosen_clothing_images.append(image_pair[choice.lower()])
-        system_activity(f"CHOOSE CLOTHING - {i+1} - Chose {choice}")
-
-if chosen_clothing_images:
+clothing_colors = []
+if len(clothing_images) > 0:
     with st.spinner("Extracting Colors..."):
-        clothing_colors = []
-        for i, image in enumerate(chosen_clothing_images):
+        for i, image in enumerate(clothing_images):
             try:
-                clothing_colors.append(colors(image))
+                clothing_colors.append(colors(image["cropped"]))
                 system_activity(f"EXTRACT COLORS - {i+1} - Extracted colors")
-            except:
-                system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors")
-                system_error(f"EXTRACT COLORS - {i+1} - {traceback.extract_tb()}")
+            except Exception as e:
+                system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors", e)
                 st.error("Unable to extract colors. Please try again.")
                 st.stop()
-
 
         st.header("Extracted colors")
 
@@ -172,15 +151,14 @@ if chosen_clothing_images:
             st.subheader(f"Colors From Item {i+1}")
             st.image(rect_colors)
 
-if chosen_clothing_images:
+if len(clothing_colors) > 0:
     with st.spinner("Checking for a match..."):
         try:
             outfit_colors = (colors for colors, _ in clothing_colors)
             matches = check_match(outfit_colors)
             system_activity(f"MATCHING - Matches found - {matches}")
         except Exception as e:
-            system_error(f"MATCHING - Failed to find outfit matching types")
-            system_error(f"MATCHING - {traceback.extract_tb()}")
+            system_error(f"MATCHING - Failed to find outfit matching types", e)
             st.error("Unable to check a match. Please try again.")
             st.stop()
         
