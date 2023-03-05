@@ -1,5 +1,4 @@
 from PIL import Image
-# import cv2
 import numpy as np
 from rembg import remove
 from typing import Dict
