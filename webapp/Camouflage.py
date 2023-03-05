@@ -1,4 +1,5 @@
 import logging
+import tracemalloc
 
 import numpy as np
 import streamlit as st
@@ -7,6 +8,7 @@ from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
 
+tracemalloc.start()
 outfit_descriptions = {
     "Basic": """
 - No more than one bright color
@@ -173,3 +175,5 @@ if len(clothing_colors) > 0:
             system_activity("RESULT - No Match")
 
 system_activity("END")
+system_activity(f"Memory allocation (current, peak): {tracemalloc.get_traced_memory()}")
+tracemalloc.stop()

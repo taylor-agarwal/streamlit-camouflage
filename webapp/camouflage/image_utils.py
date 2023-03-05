@@ -1,8 +1,9 @@
 from PIL import Image
 import numpy as np
-from rembg import remove
+from rembg import remove, new_session
 from typing import Dict
 
+SESSION = new_session("u2netp")
 
 def extract_clothes(image_bytes) -> Dict[str, np.ndarray]:
     """
@@ -12,7 +13,7 @@ def extract_clothes(image_bytes) -> Dict[str, np.ndarray]:
     """
     img = Image.open(image_bytes).convert('RGB')
 
-    img_rembg = remove(img).convert('RGB')
+    img_rembg = remove(img, session=SESSION).convert('RGB')
     images = {
         "cropped": np.array(img_rembg), 
         "original": np.array(img)
