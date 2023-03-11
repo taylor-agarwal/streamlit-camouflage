@@ -4,77 +4,85 @@ import skfuzzy as fuzz
 from skfuzzy import control as ctrl
 import numpy as np
 import matplotlib.pyplot as plt
+import streamlit as st
 
-"""
-Antecedents HSV
-HUE: color represented by number from 0(red) - 360(violet)
-{ WARM, COOL }
-
-SATURATION: color saturation represented by number from 0(faded/gray color) - 100(full color)
-{ GRAY, VERY_FADED, FADED, SATURATED, VERY_SATURATED }
-
-VALUE: brightness represented by number 0(dark) - 100(light)
-{ BLACK, VERY_DARK, DARK, BRIGHT, VERY_BRIGHT }
-"""
-
-hue_range = np.arange(0, 361, 1)
 hue_fuzzy = ['WARM', 'COOL', 'WARM_']
-hue = ctrl.Antecedent(hue_range, 'hue')
-hue['WARM'] = fuzz.gaussmf(hue.universe, 0, 60)
-hue['COOL'] = fuzz.gaussmf(hue.universe, 180, 60)
-hue['WARM_'] = fuzz.gaussmf(hue.universe, 360, 60)
-
-
-sat = ctrl.Antecedent(np.arange(0, 101, 1), 'saturation')
 sat_fuzzy = ['GRAY', 'VERY_FADED', 'FADED', 'SATURATED', 'VERY_SATURATED']
-sat['GRAY'] = fuzz.gaussmf(sat.universe, 0, 10)
-sat['VERY_FADED'] = fuzz.gaussmf(sat.universe, 25, 10)
-sat['FADED'] = fuzz.gaussmf(sat.universe, 50, 10)
-sat['SATURATED'] = fuzz.gaussmf(sat.universe, 75, 10)
-sat['VERY_SATURATED'] = fuzz.gaussmf(sat.universe, 100, 10)
-
-
-val = ctrl.Antecedent(np.arange(0, 101, 1), 'value')
 val_fuzzy = ['BLACK', 'VERY_DARK', 'DARK', 'BRIGHT', 'VERY_BRIGHT']
-val['BLACK'] = fuzz.gaussmf(val.universe, 0, 10)
-val['VERY_DARK'] = fuzz.gaussmf(val.universe, 25, 10)
-val['DARK'] = fuzz.gaussmf(val.universe, 50, 10)
-val['BRIGHT'] = fuzz.gaussmf(val.universe, 75, 10)
-val['VERY_BRIGHT'] = fuzz.gaussmf(val.universe, 100, 10)
-
-
-"""
-Consequents
-TONE: mix of Saturation and Value that indicate if color is neutral or dark/bright
-{ NEUTRAL, DARK, BRIGHT }
-"""
-tone_range = np.arange(0, 12, 1)
 tone_fuzzy = ['NEUTRAL', 'DARK', 'BRIGHT']
-tone = ctrl.Consequent(tone_range, 'tone')
 
-tone['NEUTRAL'] = fuzz.trapmf(tone.universe, [0, 0, 1, 2])
-tone['DARK'] = fuzz.gbellmf(tone.universe, 2, 1, 3)
-tone['BRIGHT'] = fuzz.gbellmf(tone.universe, 4, 1, 9.5)
+@st.cache_resource
+def get_tone_hue():
+    """
+    Antecedents HSV
+    HUE: color represented by number from 0(red) - 360(violet)
+    { WARM, COOL }
+
+    SATURATION: color saturation represented by number from 0(faded/gray color) - 100(full color)
+    { GRAY, VERY_FADED, FADED, SATURATED, VERY_SATURATED }
+
+    VALUE: brightness represented by number 0(dark) - 100(light)
+    { BLACK, VERY_DARK, DARK, BRIGHT, VERY_BRIGHT }
+    """
+
+    hue_range = np.arange(0, 361, 1)
+    hue = ctrl.Antecedent(hue_range, 'hue')
+    hue['WARM'] = fuzz.gaussmf(hue.universe, 0, 60)
+    hue['COOL'] = fuzz.gaussmf(hue.universe, 180, 60)
+    hue['WARM_'] = fuzz.gaussmf(hue.universe, 360, 60)
 
 
-"""
-Fuzzy rules
-for tones
-"""
-rule1 = ctrl.Rule(val['BLACK'] | sat['GRAY'] | sat['VERY_FADED'], tone['NEUTRAL'], 'Dark colors without color (low brightness/dark) considered neutral')
-rule2 = ctrl.Rule(val['VERY_DARK'] & sat['SATURATED'], tone['NEUTRAL'], 'Very dark colors with high saturation')
-rule3 = ctrl.Rule(val['DARK'] & sat['FADED'], tone['DARK'], 'Dark color with normal saturation')
-rule4 = ctrl.Rule(val['DARK'] & sat['VERY_SATURATED'], tone['BRIGHT'], 'Dark color with high saturation')
-rule5 = ctrl.Rule(val['BRIGHT'] & sat['SATURATED'], tone['BRIGHT'], 'Bright color with high saturation')
-rule6 = ctrl.Rule(val['VERY_BRIGHT'] & sat['FADED'], tone['BRIGHT'], 'Very bright color with some saturation')
-rule7 = ctrl.Rule(val['VERY_BRIGHT'] & sat['VERY_SATURATED'], tone['BRIGHT'], 'Very bright color with high saturation')
-rule8 = ctrl.Rule(val['VERY_DARK'] & sat['FADED'], tone['NEUTRAL'], 'Very dark color with faded saturation')
+    sat = ctrl.Antecedent(np.arange(0, 101, 1), 'saturation')
+    sat['GRAY'] = fuzz.gaussmf(sat.universe, 0, 10)
+    sat['VERY_FADED'] = fuzz.gaussmf(sat.universe, 25, 10)
+    sat['FADED'] = fuzz.gaussmf(sat.universe, 50, 10)
+    sat['SATURATED'] = fuzz.gaussmf(sat.universe, 75, 10)
+    sat['VERY_SATURATED'] = fuzz.gaussmf(sat.universe, 100, 10)
 
-"""
-Control system
-for tones
-"""
-tone_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8])
+
+    val = ctrl.Antecedent(np.arange(0, 101, 1), 'value')
+    val['BLACK'] = fuzz.gaussmf(val.universe, 0, 10)
+    val['VERY_DARK'] = fuzz.gaussmf(val.universe, 25, 10)
+    val['DARK'] = fuzz.gaussmf(val.universe, 50, 10)
+    val['BRIGHT'] = fuzz.gaussmf(val.universe, 75, 10)
+    val['VERY_BRIGHT'] = fuzz.gaussmf(val.universe, 100, 10)
+
+
+    """
+    Consequents
+    TONE: mix of Saturation and Value that indicate if color is neutral or dark/bright
+    { NEUTRAL, DARK, BRIGHT }
+    """
+    tone_range = np.arange(0, 12, 1)
+    tone = ctrl.Consequent(tone_range, 'tone')
+    tone['NEUTRAL'] = fuzz.trapmf(tone.universe, [0, 0, 1, 2])
+    tone['DARK'] = fuzz.gbellmf(tone.universe, 2, 1, 3)
+    tone['BRIGHT'] = fuzz.gbellmf(tone.universe, 4, 1, 9.5)
+
+
+    """
+    Fuzzy rules
+    for tones
+    """
+    rule1 = ctrl.Rule(val['BLACK'] | sat['GRAY'] | sat['VERY_FADED'], tone['NEUTRAL'], 'Dark colors without color (low brightness/dark) considered neutral')
+    rule2 = ctrl.Rule(val['VERY_DARK'] & sat['SATURATED'], tone['NEUTRAL'], 'Very dark colors with high saturation')
+    rule3 = ctrl.Rule(val['DARK'] & sat['FADED'], tone['DARK'], 'Dark color with normal saturation')
+    rule4 = ctrl.Rule(val['DARK'] & sat['VERY_SATURATED'], tone['BRIGHT'], 'Dark color with high saturation')
+    rule5 = ctrl.Rule(val['BRIGHT'] & sat['SATURATED'], tone['BRIGHT'], 'Bright color with high saturation')
+    rule6 = ctrl.Rule(val['VERY_BRIGHT'] & sat['FADED'], tone['BRIGHT'], 'Very bright color with some saturation')
+    rule7 = ctrl.Rule(val['VERY_BRIGHT'] & sat['VERY_SATURATED'], tone['BRIGHT'], 'Very bright color with high saturation')
+    rule8 = ctrl.Rule(val['VERY_DARK'] & sat['FADED'], tone['NEUTRAL'], 'Very dark color with faded saturation')
+
+    """
+    Control system
+    for tones
+    """
+    tone_ctrl = ctrl.ControlSystem([rule1, rule2, rule3, rule4, rule5, rule6, rule7, rule8])
+
+    return tone_ctrl, tone_range, tone, hue_range, hue
+
+
+tone_ctrl, tone_range, tone, hue_range, hue = get_tone_hue()
 
 ####################
 ## CLOTHES TYPING ##
@@ -96,7 +104,7 @@ def GetMembership(fuzzy_values, var_range, var_model, crisp_value):
 
 
 
-def GetTone(values, verbose=False):
+def GetTone(values):
     """
     Given Saturation and Value, returns a String indicating if the combination 
     of both values results in a 'NEUTRAL', 'DARK', or 'BRIGHT' tone.
@@ -104,7 +112,6 @@ def GetTone(values, verbose=False):
     values - tuple(sat, val)
         + sat - value from 0-100
         + val - value from 0-100
-    verbose - prints both crisp value and fuzzy value
     """
     tone_sim = ctrl.ControlSystemSimulation(tone_ctrl)
     tone_sim.input['saturation'] = values[0]
@@ -112,25 +119,18 @@ def GetTone(values, verbose=False):
     tone_sim.compute()
     tone_output = tone_sim.output['tone']
     tone_membership = GetMembership(tone_fuzzy, tone_range, tone, tone_output)
-    if verbose:
-        print("TONE CRISP VALUE: ", tone_output)
-        print("TONE FUZZY VALUE: ", tone_membership)
     return tone_membership
 
 
 
-def GetColorTemp(hue_val, verbose=False):
+def GetColorTemp(hue_val):
     """
     Given Hue, returns a String indicating if the color belongs
     to 'WARM' or 'COOL' colors.
     INPUT:
     hue - value from 0-360
-    verbose - prints both crisp value and fuzzy value
     """
     temp_membership = GetMembership(hue_fuzzy, hue_range, hue, hue_val)
-    if verbose:
-        print("TEMP. CRISP VALUE: ", hue_val)
-        print("TEMP. FUZZY VALUE: ", temp_membership)
     return temp_membership
 
 
