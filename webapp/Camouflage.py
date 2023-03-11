@@ -8,6 +8,8 @@ from camouflage.image_utils import extract_clothes
 from camouflage.image_color_utils import colors
 from camouflage.color_match_utils import check_match
 
+# TODO: Make it so if all pixels are black, it returns the whole black image
+
 tracemalloc.start()
 outfit_descriptions = {
     "Basic": """
@@ -76,21 +78,7 @@ with col:
     st.image("images/logo.png")
 
 st.title("Welcome to Camouflage!")
-
-st.header("How to Use Camouflage")
-
-st.markdown("""
-    Camouflage tells you if the colors in your clothes form a matching outfit.
-    First, take pictures of the clothing items in the outfit individually against a neutral background.
-    You can take pictures of any clothing item, including shirts, pants, shoes, skirts, hats, ties, scarves, etc.
-    Then, it will attempt to trim down the image to crop as close to the clothing item as possible.
-    If the image was cropped incorrectly, you can choose to use the original instead.
-    Then it will extract the five primary colors from each image.
-    Based on the most frequent color in each item, the app will classify the outfit as 'Basic', 'Neutral', 
-    'Analogus', 'Contrast', 'Summer', and/or 'Winter'.
-    If the outfit fits at least one classification then the outfit matches!
-    Use your own judgement when it comes to things like stripes with plaid, or wearing all the same color.
-""")
+st.subheader("Helping the Colorblind Blend In")
 
 st.header("Start by picking the how many clothing items you are trying to match")
 num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4], on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
@@ -121,15 +109,9 @@ if images_taken:
                 st.stop()
 
     for i, image_pair in enumerate(clothing_images):
+        system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
         st.subheader(f"From Item {i+1}")
-
-        system_activity("CHOOSE CLOTHING - {i+1} - Displaying clothing")
-        col1, col2 = st.columns(2)
-
-        with col1:
-            st.image(np.array(image_pair["cropped"]), caption="Cropped")
-        with col2:
-            st.image(np.array(image_pair["original"]), caption="Original")
+        st.image(np.array(image_pair["cropped"]), caption="Cropped")
 
 clothing_colors = []
 if len(clothing_images) > 0:
