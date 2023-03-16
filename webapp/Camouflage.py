@@ -62,7 +62,7 @@ def system_error(message, e):
     logger.error(f"{st.session_state['session_num']} - SYSTEM - {message}")
     logger.exception(e)
 
-system_activity(f"START")
+system_activity("START")
 
 hide_footer_style = """
     <style>
@@ -72,13 +72,23 @@ hide_footer_style = """
 """
 st.markdown(hide_footer_style, unsafe_allow_html=True)
 
-_, col, _ = st.columns(3)
+col1, col2, col3 = st.columns(3)
 
-with col:
+with col1:
+    st.write(' ')
+with col2:
     st.image("images/logo.png")
+with col3:
+    st.write(' ')
 
-st.title("Welcome to Camouflage!")
-st.subheader("Helping the Colorblind Blend In")
+title = """
+<center>
+<h1>Welcome to Camouflage!</h1>
+<h5><em>Helping the Colorblind Blend In</em></h5>
+</center>
+"""
+
+st.write(title, unsafe_allow_html=True)
 
 st.header("Start by picking the how many clothing items you are trying to match")
 num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4], on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
@@ -155,6 +165,9 @@ if len(clothing_colors) > 0:
         else:
             st.header("It's not a match :(")
             system_activity("RESULT - No Match")
+
+with st.container():
+    st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
 
 system_activity("END")
 system_activity(f"Memory allocation (current, peak): {tracemalloc.get_traced_memory()}")
