@@ -4,9 +4,7 @@ import tracemalloc
 import numpy as np
 import streamlit as st
 
-from camouflage.image_utils import extract_clothes
-from camouflage.image_color_utils import colors
-from camouflage.color_match_utils import check_match
+from camouflage.objects import Clothing, Outfit
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
@@ -105,30 +103,33 @@ if int(num_images) > 0:
 
 images_taken = not any([image is None for image in images])
 
-clothing_images = []
+outfit = None
+clothes = []
 if images_taken:
     system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
     with st.spinner("Extracting Clothes..."):
         for i, image in enumerate(images):
             try:
-                clothing_images.append(extract_clothes(image))
+                clothing = Clothing(image)
+                clothing.rembg()
+                clothes.append(clothing)
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
             except Exception as e:
                 system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images", e)
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
-    for i, image_pair in enumerate(clothing_images):
+    outfit = Outfit(clothes=clothes)
+    for i, clothing in enumerate(outfit):
         system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
         st.subheader(f"From Item {i+1}")
-        st.image(np.array(image_pair["cropped"]), caption="Cropped")
+        st.image(clothing.image_rembg, caption="Cropped")
 
-clothing_colors = []
-if len(clothing_images) > 0:
+if outfit:
     with st.spinner("Extracting Colors..."):
-        for i, image in enumerate(clothing_images):
+        for i, clothing in enumerate(outfit):
             try:
-                clothing_colors.append(colors(image["cropped"]))
+                clothing.extract_colors()
                 system_activity(f"EXTRACT COLORS - {i+1} - Extracted colors")
             except Exception as e:
                 system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors", e)
@@ -137,17 +138,15 @@ if len(clothing_images) > 0:
 
         st.header("Extracted colors")
 
-        for i, color_pair in enumerate(clothing_colors):
+        for i, clothing in enumerate(outfit):
             system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
-            _, rect_colors = color_pair
             st.subheader(f"Colors From Item {i+1}")
-            st.image(rect_colors)
+            st.image(clothing.get_color_rect())
 
-if len(clothing_colors) > 0:
+if outfit:
     with st.spinner("Checking for a match..."):
         try:
-            outfit_colors = (colors for colors, _ in clothing_colors)
-            matches = check_match(outfit_colors)
+            matches = outfit.get_matches()
             system_activity(f"MATCHING - Matches found - {matches}")
         except Exception as e:
             system_error(f"MATCHING - Failed to find outfit matching types", e)
