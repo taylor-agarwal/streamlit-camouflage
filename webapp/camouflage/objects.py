@@ -36,17 +36,28 @@ COLOR_NAMES, KDT_DB = get_kdt_db()
 Colors = NewType('Colors', Dict[Tuple[float, float, float], float])
 
 class Clothing:
+    """Describes an article of clothing"""
 
     def __init__(self, image_bytes: BytesIO):
+        """
+        Args:
+            image_bytes (BytesIO): Image of the clothing item
+        """
         self.image_bytes: BytesIO = image_bytes
         self.image: np.ndarray = Image.open(image_bytes).convert('RGB')
         self.image_rembg: np.ndarray = None
         self.colors: Colors = None
 
     def rembg(self):
+        """Remove background from the clothing image"""
         self.image_rembg = remove(self.image, session=SESSION).convert('RGB')
 
     def extract_colors(self, n: float = 4):
+        """Extract the colors from clothing image
+
+        Args:
+            n (float, optional): Number of colors to extract from the image. Defaults to 4.
+        """
         if not self.image_rembg:
             self.rembg()
         
@@ -72,10 +83,20 @@ class Clothing:
         self.colors = image_colors
 
     def get_colors(self) -> List[Tuple[float, float, float]]:
+        """Gets the list of colors as rgb values in order of frequency
+
+        Returns:
+            List[Tuple[float, float, float]]: Ordered rgb tuples ordered based on frequency in the image
+        """
         colors = [color for color, _ in self.colors.items()]
         return colors
 
-    def get_color_names(self):
+    def get_color_names(self) -> List[str]:
+        """Gets the names of the colors as strings in order of frequency
+
+        Returns:
+            List[str]: List of color names in order of frequency in the clothing image
+        """
         color_names = []
         for color in self.get_colors():
             distance, index = KDT_DB.query(color)
@@ -83,6 +104,16 @@ class Clothing:
         return color_names
 
     def get_color_rect(self, height: int = 50, width: int = 300) -> np.ndarray:
+        """Get a numpy array of shape (width, height, 3) containing proportional amounts of each color in the
+        clothing image
+
+        Args:
+            height (int, optional): Height of the color rectangle in pixels. Defaults to 50.
+            width (int, optional): Width of the color rectangle in pixels. Defaults to 300.
+
+        Returns:
+            np.ndarray: _description_
+        """
         if not self.colors:
             self.extract_colors()
 
@@ -96,14 +127,24 @@ class Clothing:
         return np.concatenate(color_rect, axis=1)
 
 class Outfit:
+    """Describes a collection of clothing in an outfit"""
 
     def __init__(self, clothes: List[Clothing]):
+        """
+        Args:
+            clothes (List[Clothing]): List of clothing items in the outfit
+        """
         self.clothes: List[Clothing] = clothes
 
     def __iter__(self):
         return iter(self.clothes)
 
-    def get_matches(self):
+    def get_matches(self) -> List[str]:
+        """Get names of outfit match types
+
+        Returns:
+            List[str]: List of names of outfit match types
+        """
         primary_rgbs = [clothing.get_colors()[0] for clothing in self]
         primary_rgb_norms = [(r/255.0, g/255.0, b/255.0) for r, g, b in primary_rgbs]
         primary_hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in primary_rgb_norms]

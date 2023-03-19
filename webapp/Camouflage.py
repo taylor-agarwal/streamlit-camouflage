@@ -8,7 +8,10 @@ from camouflage.objects import Clothing, Outfit
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
+# Start memory tracing
 tracemalloc.start()
+
+# Write outfit descriptions
 outfit_descriptions = {
     "Basic": """
 - No more than one bright color
@@ -37,16 +40,19 @@ outfit_descriptions = {
 """
 }
 
+# Initialize logger
 logger = logging.getLogger(__name__)
 logging.basicConfig(
     level='info',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 
+# Track sessions
 if 'session_num' not in st.session_state:
     id = np.random.randint(1, 999999999)
     st.session_state['session_num'] = id
 
+# Logging message types
 def user_activity(message):
     logger.info(f"{st.session_state['session_num']} - USER - {message}")
 
@@ -62,6 +68,7 @@ def system_error(message, e):
 
 system_activity("START")
 
+# Hide streamlit header and footer
 hide_footer_style = """
     <style>
     footer {visibility: hidden;} 
@@ -70,6 +77,7 @@ hide_footer_style = """
 """
 st.markdown(hide_footer_style, unsafe_allow_html=True)
 
+# Create title
 col1, col2, col3 = st.columns(3)
 
 with col1:
@@ -88,8 +96,10 @@ title = """
 
 st.write(title, unsafe_allow_html=True)
 
+# User select number of images
 num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4], on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
 
+# Generate camera input dialogues
 images = [None]
 if int(num_images) > 0:
     system_activity(f"NUMBER INPUT - {num_images} items selected")
@@ -99,13 +109,14 @@ if int(num_images) > 0:
         image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
         images.append(image)
 
+# If all the images have been taken, start processing them and put them in an outfit
 images_taken = not any([image is None for image in images])
-
 outfit = None
 clothes = []
 if images_taken:
     system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
     with st.spinner("Extracting Clothes..."):
+        # Save clothes and remove backgrounds
         for i, image in enumerate(images):
             try:
                 clothing = Clothing(image)
@@ -117,13 +128,19 @@ if images_taken:
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
+    # Put clothes into an outfit
     outfit = Outfit(clothes=clothes)
+
+# If the outfit has been created, display the cropped images
+if outfit:
     for i, clothing in enumerate(outfit):
         system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
         st.image(clothing.image_rembg, caption=f"From Item {i+1}")
 
+# If the outfit is created, try extracting and displaying the colors from each clothing item
 if outfit:
     with st.spinner("Extracting Colors..."):
+        # Try extracting colors from each clothing item
         for i, clothing in enumerate(outfit):
             try:
                 clothing.extract_colors()
@@ -133,13 +150,14 @@ if outfit:
                 st.error("Unable to extract colors. Please try again.")
                 st.stop()
 
+        # Display the extracted colors
         st.header("Extracted colors")
-
         for i, clothing in enumerate(outfit):
             system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
             st.image(clothing.get_color_rect(), caption=f"Colors From Item {i+1}")
             st.write(f"Colors: {', '.join(clothing.get_color_names())}")
 
+    # Check outfit for matches
     with st.spinner("Checking for a match..."):
         try:
             matches = outfit.get_matches()
@@ -163,9 +181,12 @@ if outfit:
             st.header("It's not a match :(")
             system_activity("RESULT - No Match")
 
-with st.container():
-    st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
+# Show feedback link
+if outfit:
+    with st.container():
+        st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
 
+# Log memory usage
 system_activity("END")
 system_activity(f"Memory allocation (current, peak): {tracemalloc.get_traced_memory()}")
 tracemalloc.stop()
