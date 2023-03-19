@@ -154,6 +154,8 @@ if outfit:
             st.subheader(match)
             st.markdown(outfit_descriptions[match])
 
+        st.write(f"Results are based on the primary color of each clothing item only.")
+
         if len(matches) > 0:
             st.header("It's a match!")
             system_activity("RESULT - Match")
