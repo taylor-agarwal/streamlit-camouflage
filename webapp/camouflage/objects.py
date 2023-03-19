@@ -75,7 +75,7 @@ class Clothing:
 
         # Save the color and the percent of pixels with that color
         image_colors = dict()
-        pct_colors = sorted([(percent, color) for percent, color in zip(color_hist, colors)])
+        pct_colors = sorted([(percent, color) for percent, color in zip(color_hist, colors)])[::-1]
         for pct, color in pct_colors:
             color = tuple(color.tolist())
             image_colors[color] = pct
