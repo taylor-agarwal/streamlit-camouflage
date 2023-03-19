@@ -133,6 +133,7 @@ if images_taken:
 
 # If the outfit has been created, display the cropped images
 if outfit:
+    st.header("Cropped Images")
     for i, clothing in enumerate(outfit):
         system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
         st.image(clothing.image_rembg, caption=f"From Item {i+1}")
