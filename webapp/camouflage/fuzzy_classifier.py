@@ -1,9 +1,9 @@
 # From https://github.com/FCARRILLOM/ClassifyingColorMatchingOutfits/blob/main/ColorMeMedium.ipynb
 
-import skfuzzy as fuzz
-from skfuzzy import control as ctrl
 import numpy as np
 import matplotlib.pyplot as plt
+import skfuzzy as fuzz
+from skfuzzy import control as ctrl
 import streamlit as st
 
 hue_fuzzy = ['WARM', 'COOL', 'WARM_']

@@ -1,20 +1,17 @@
+from io import BytesIO
 from typing import Dict, List, Tuple, NewType
 
-import streamlit as st
-
-from io import BytesIO
+from colorsys import rgb_to_hsv
+import numpy as np
 from PIL import Image
 from rembg import remove, new_session
-
 from scipy.spatial import KDTree
+from sklearn.cluster import KMeans
+import streamlit as st
 from webcolors import (
     CSS3_HEX_TO_NAMES,
     hex_to_rgb,
 )
-
-import numpy as np
-from sklearn.cluster import KMeans
-from colorsys import rgb_to_hsv
 
 from camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
 
