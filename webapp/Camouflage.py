@@ -90,7 +90,6 @@ title = """
 
 st.write(title, unsafe_allow_html=True)
 
-st.header("Start by picking the how many clothing items you are trying to match")
 num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4], on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
 
 images = [None]
@@ -99,7 +98,6 @@ if int(num_images) > 0:
     num_images = int(num_images)
     images = []
     for i in range(num_images):
-        st.subheader(f"Clothing Item {i+1}")
         image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
         images.append(image)
 
@@ -118,10 +116,10 @@ if images_taken:
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
+    st.header("Cropped Images")
     for i, image_pair in enumerate(clothing_images):
         system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
-        st.subheader(f"From Item {i+1}")
-        st.image(np.array(image_pair["cropped"]), caption="Cropped")
+        st.image(np.array(image_pair["cropped"]), caption=f"From Item {i+1}")
 
 clothing_colors = []
 if len(clothing_images) > 0:
@@ -140,8 +138,7 @@ if len(clothing_images) > 0:
         for i, color_pair in enumerate(clothing_colors):
             system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
             _, rect_colors = color_pair
-            st.subheader(f"Colors From Item {i+1}")
-            st.image(rect_colors)
+            st.image(rect_colors, caption=f"Colors From Item {i+1}")
 
 if len(clothing_colors) > 0:
     with st.spinner("Checking for a match..."):
