@@ -138,6 +138,7 @@ if outfit:
         for i, clothing in enumerate(outfit):
             system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
             st.image(clothing.get_color_rect(), caption=f"Colors From Item {i+1}")
+            st.write(f"Colors: {', '.join(clothing.get_color_names())}")
 
     with st.spinner("Checking for a match..."):
         try:

@@ -6,6 +6,12 @@ from io import BytesIO
 from PIL import Image
 from rembg import remove, new_session
 
+from scipy.spatial import KDTree
+from webcolors import (
+    CSS3_HEX_TO_NAMES,
+    hex_to_rgb,
+)
+
 import numpy as np
 from sklearn.cluster import KMeans
 from colorsys import rgb_to_hsv
@@ -16,7 +22,19 @@ from camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
 def get_session():
     return new_session("u2netp")
 
+@st.cache_resource
+def get_kdt_db():
+    names = []
+    rgb_values = []
+    for color_hex, color_name in CSS3_HEX_TO_NAMES.items():
+        names.append(color_name)
+        rgb_values.append(hex_to_rgb(color_hex))
+    
+    return names, KDTree(rgb_values)
+
 SESSION = get_session()
+
+COLOR_NAMES, KDT_DB = get_kdt_db()
 
 Colors = NewType('Colors', Dict[Tuple[float, float, float], float])
 
@@ -49,24 +67,30 @@ class Clothing:
 
         # Save the color and the percent of pixels with that color
         image_colors = dict()
-        for pct, color in zip(color_hist, colors):
+        pct_colors = sorted([(percent, color) for percent, color in zip(color_hist, colors)])
+        for pct, color in pct_colors:
             color = tuple(color.tolist())
             image_colors[color] = pct
 
         self.colors = image_colors
 
-    def get_colors(self):
-        pct_colors = sorted([(percent, color) for color, percent in self.colors.items()])
-        colors = [color for _, color in pct_colors]
+    def get_colors(self) -> List[Tuple[float, float, float]]:
+        colors = [color for color, _ in self.colors.items()]
         return colors
+
+    def get_color_names(self):
+        color_names = []
+        for color in self.get_colors():
+            distance, index = KDT_DB.query(color)
+            color_names.append(COLOR_NAMES[index])
+        return color_names
 
     def get_color_rect(self, height: int = 50, width: int = 300) -> np.ndarray:
         if not self.colors:
             self.extract_colors()
 
         color_rect = []
-        img_colors = sorted([(percent, color) for color, percent in self.colors.items()])
-        for percent, color in img_colors:
+        for color, percent in self.colors.items():
             color = [c / 255.0 for c in color]
             color_width = int(percent * width)
             rect_color = np.zeros([height, color_width, 3])
