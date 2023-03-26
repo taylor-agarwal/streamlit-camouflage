@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "streamlit-camouflage"
+version = "0.1.0"
+description = ""
+authors = ["Taylor Agarwal <taylor.agarwal@gmail.com>"]
+readme = "README.md"
+packages = [{include = "streamlit_camouflage"}]
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.9.7 || >3.9.7,<3.11"
+streamlit = "^1.20.0"
+rembg = "^2.0.30"
+webcolors = "^1.12"
+scikit-fuzzy = "^0.4.2"
+matplotlib = "^3.7.1"
+scikit-learn = "^1.2.2"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

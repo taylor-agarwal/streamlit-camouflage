@@ -1,6 +1,6 @@
 # app/Dockerfile
 
-FROM python:3.9-slim
+FROM python:3.8-slim
 
 WORKDIR /app
 
@@ -13,9 +13,13 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./requirements.txt
+RUN pip3 install poetry==1.4.1
 
-RUN pip3 install -r requirements.txt
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry config virtualenvs.create false \
+  && poetry install $(test "$YOUR_ENV" == production && echo "--no-dev") --no-interaction --no-ansi
+
 
 EXPOSE 8501
 
