@@ -91,6 +91,7 @@ title = """
 <center>
 <h1>Welcome to Camouflage!</h1>
 <h5><em>Helping the Colorblind Blend In</em></h5>
+<text>If you do not see the logo above, please refresh the page</text>
 </center>
 """
 
