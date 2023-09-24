@@ -3,13 +3,20 @@ import tracemalloc
 
 import numpy as np
 import streamlit as st
-
-from camouflage.objects import Clothing, Outfit
+import requests
+import json
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
 # Start memory tracing
 tracemalloc.start()
+
+# Declare API endpoints
+API_ENDPOINT = "http://localhost:80"
+API_ROUTES = {
+    "colors": API_ENDPOINT + "/colors",
+    "matches": API_ENDPOINT + "/matches",
+}
 
 # Write outfit descriptions
 outfit_descriptions = {
@@ -120,9 +127,16 @@ if images_taken:
         # Save clothes and remove backgrounds
         for i, image in enumerate(images):
             try:
-                clothing = Clothing(image)
-                clothing.rembg()
-                clothes.append(clothing)
+                # clothing = Clothing(image)
+                # clothing.rembg()
+                # clothes.append(clothing)
+                # image_bytes = image.read()
+                files = {"file": image}
+                response = requests.post(API_ROUTES["colors"], files=files)
+                response.raise_for_status()
+                colors = response.json()
+                system_activity(f"CLOTHING EXTRACTION - {i+1} - Colors {colors}")
+                clothes.append(colors)
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
             except Exception as e:
                 system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images", e)
@@ -130,39 +144,43 @@ if images_taken:
                 st.stop()
 
     # Put clothes into an outfit
-    outfit = Outfit(clothes=clothes)
+    # outfit = Outfit(clothes=clothes)
 
 # If the outfit has been created, display the cropped images
-if outfit:
-    st.header("Cropped Images")
-    for i, clothing in enumerate(outfit):
-        system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
-        st.image(clothing.image_rembg, caption=f"From Item {i+1}")
+# if outfit:
+#     st.header("Cropped Images")
+#     for i, clothing in enumerate(outfit):
+#         system_activity("CLOTHING EXTRACTION - {i+1} - Displaying clothing")
+#         st.image(clothing.image_rembg, caption=f"From Item {i+1}")
 
 # If the outfit is created, try extracting and displaying the colors from each clothing item
-if outfit:
-    with st.spinner("Extracting Colors..."):
-        # Try extracting colors from each clothing item
-        for i, clothing in enumerate(outfit):
-            try:
-                clothing.extract_colors()
-                system_activity(f"EXTRACT COLORS - {i+1} - Extracted colors")
-            except Exception as e:
-                system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors", e)
-                st.error("Unable to extract colors. Please try again.")
-                st.stop()
+if len(clothes) > 0:
+    # with st.spinner("Extracting Colors..."):
+    #     # Try extracting colors from each clothing item
+    #     for i, clothing in enumerate(outfit):
+    #         try:
+    #             clothing.extract_colors()
+    #             system_activity(f"EXTRACT COLORS - {i+1} - Extracted colors")
+    #         except Exception as e:
+    #             system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors", e)
+    #             st.error("Unable to extract colors. Please try again.")
+    #             st.stop()
 
-        # Display the extracted colors
-        st.header("Extracted colors")
-        for i, clothing in enumerate(outfit):
-            system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
-            st.image(clothing.get_color_rect(), caption=f"Colors From Item {i+1}")
-            st.write(f"Colors: {', '.join(clothing.get_color_names())}")
+    #     # Display the extracted colors
+    #     st.header("Extracted colors")
+    #     for i, clothing in enumerate(outfit):
+    #         system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
+    #         st.image(clothing.get_color_rect(), caption=f"Colors From Item {i+1}")
+    #         st.write(f"Colors: {', '.join(clothing.get_color_names())}")
 
     # Check outfit for matches
     with st.spinner("Checking for a match..."):
         try:
-            matches = outfit.get_matches()
+            # matches = outfit.get_matches()
+            body = {"outfit": clothes}
+            response = requests.post(API_ROUTES["matches"], json=body)
+            response.raise_for_status()
+            matches = response.json()
             system_activity(f"MATCHING - Matches found - {matches}")
         except Exception as e:
             system_error(f"MATCHING - Failed to find outfit matching types", e)

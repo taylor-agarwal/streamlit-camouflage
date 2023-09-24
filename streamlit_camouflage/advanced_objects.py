@@ -13,7 +13,7 @@ from webcolors import (
     hex_to_rgb,
 )
 
-from camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
+from streamlit_camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
 
 @st.cache_resource
 def get_session():
@@ -35,6 +35,9 @@ COLOR_NAMES, KDT_DB = get_kdt_db()
 
 Colors = NewType('Colors', Dict[Tuple[float, float, float], float])
 
+DEFAULT_EXTRACT_N = 4
+DENOISE_N = 2
+
 class Clothing:
     """Describes an article of clothing"""
 
@@ -47,12 +50,23 @@ class Clothing:
         self.image: np.ndarray = Image.open(image_bytes).convert('RGB')
         self.image_rembg: np.ndarray = None
         self.colors: Colors = None
+        self.n_colors: int = None
 
     def rembg(self):
         """Remove background from the clothing image"""
         self.image_rembg = remove(self.image, session=SESSION).convert('RGB')
 
-    def extract_colors(self, n: float = 4):
+    def set_n_colors(self, n: int):
+        """Set the maximum number of colors in the clothing item
+
+        Args:
+            n (int): The maximum number of colors
+        """
+        self.n_colors = n
+        if self.colors is not None:
+            self.extract_colors()
+
+    def extract_colors(self):
         """Extract the colors from clothing image
 
         Args:
@@ -64,6 +78,7 @@ class Clothing:
         pixels = np.array([pixel for row in np.array(self.image_rembg) for pixel in row if sum(pixel) != 0])
     
         # Find clusters of colors to determine dominant colors
+        n = self.n_colors + DENOISE_N if self.n_colors is not None else DEFAULT_EXTRACT_N
         color_cluster = KMeans(n_clusters=n, random_state=1).fit(pixels)
         cluster, colors = color_cluster, color_cluster.cluster_centers_
         
@@ -73,17 +88,26 @@ class Clothing:
         color_hist = color_hist.astype("float")
         color_hist /= color_hist.sum()
 
-        # Save the color and the percent of pixels with that color
+        # Remove the noise colors
         image_colors = dict()
         pct_colors = sorted([(percent, color) for percent, color in zip(color_hist, colors)])[::-1]
+        pct_colors = pct_colors[:(-1*DENOISE_N)]
+        total_pct = sum([percent for percent, color in pct_colors])
+        pct_colors = [(percent / total_pct, color) for percent, color in pct_colors]
+
+        # Save the color and the percent of pixels with that color
         for pct, color in pct_colors:
             color = tuple(color.tolist())
             image_colors[color] = pct
 
         self.colors = image_colors
 
+
     def get_colors(self) -> List[Tuple[float, float, float]]:
         """Gets the list of colors as rgb values in order of frequency
+
+        Args:
+            lim (int, optional): Limit the number of colors to return. If lim is None, all extracted colors are returned
 
         Returns:
             List[Tuple[float, float, float]]: Ordered rgb tuples ordered based on frequency in the image
@@ -93,6 +117,9 @@ class Clothing:
 
     def get_color_names(self) -> List[str]:
         """Gets the names of the colors as strings in order of frequency
+
+        Args:
+            lim (int, optional): Maximum number of colors to name in each output. If None, all extracted colors are outputted
 
         Returns:
             List[str]: List of color names in order of frequency in the clothing image
@@ -145,12 +172,12 @@ class Outfit:
         Returns:
             List[str]: List of names of outfit match types
         """
-        primary_rgbs = [clothing.get_colors()[0] for clothing in self]
-        primary_rgb_norms = [(r/255.0, g/255.0, b/255.0) for r, g, b in primary_rgbs]
-        primary_hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in primary_rgb_norms]
-        primary_hsvs = [(h*360.0, s*100.0, v*100.0) for h, s, v in primary_hsv_norms]
+        rgbs = sum([clothing.get_colors() for clothing in self], start=[])
+        rgb_norms = [(r/255.0, g/255.0, b/255.0) for r, g, b in rgbs]
+        hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in rgb_norms]
+        hsvs = [(h*360.0, s*100.0, v*100.0) for h, s, v in hsv_norms]
 
-        outfit = [GetColorDesc(hsv) for hsv in primary_hsvs]
+        outfit = [GetColorDesc(hsv) for hsv in hsvs]
 
         matches = GetValidMatches(outfit)
 
