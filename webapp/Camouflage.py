@@ -4,7 +4,8 @@ import tracemalloc
 import numpy as np
 import streamlit as st
 import requests
-import json
+
+from streamlit_camouflage.webutils import get_color_rect
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
@@ -119,32 +120,24 @@ if int(num_images) > 0:
 
 # If all the images have been taken, start processing them and put them in an outfit
 images_taken = not any([image is None for image in images])
-outfit = None
-clothes = []
+outfit = []
 if images_taken:
     system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
     with st.spinner("Extracting Clothes..."):
         # Save clothes and remove backgrounds
         for i, image in enumerate(images):
             try:
-                # clothing = Clothing(image)
-                # clothing.rembg()
-                # clothes.append(clothing)
-                # image_bytes = image.read()
                 files = {"file": image}
                 response = requests.post(API_ROUTES["colors"], files=files)
                 response.raise_for_status()
                 colors = response.json()
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Colors {colors}")
-                clothes.append(colors)
+                outfit.append(colors)
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
             except Exception as e:
                 system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images", e)
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
-
-    # Put clothes into an outfit
-    # outfit = Outfit(clothes=clothes)
 
 # If the outfit has been created, display the cropped images
 # if outfit:
@@ -154,30 +147,19 @@ if images_taken:
 #         st.image(clothing.image_rembg, caption=f"From Item {i+1}")
 
 # If the outfit is created, try extracting and displaying the colors from each clothing item
-if len(clothes) > 0:
-    # with st.spinner("Extracting Colors..."):
-    #     # Try extracting colors from each clothing item
-    #     for i, clothing in enumerate(outfit):
-    #         try:
-    #             clothing.extract_colors()
-    #             system_activity(f"EXTRACT COLORS - {i+1} - Extracted colors")
-    #         except Exception as e:
-    #             system_error(f"EXTRACT COLORS - {i+1} - Failed to extract colors", e)
-    #             st.error("Unable to extract colors. Please try again.")
-    #             st.stop()
-
-    #     # Display the extracted colors
-    #     st.header("Extracted colors")
-    #     for i, clothing in enumerate(outfit):
-    #         system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
-    #         st.image(clothing.get_color_rect(), caption=f"Colors From Item {i+1}")
-    #         st.write(f"Colors: {', '.join(clothing.get_color_names())}")
+if len(outfit) > 0:
+    # Display the extracted colors
+    st.header("Extracted colors")
+    for i, clothing in enumerate(outfit):
+        system_activity(f"EXTRACT COLORS - {i+1} - Display colors")
+        rect = get_color_rect(clothing['colors'])
+        st.image(rect, caption=f"Colors From Item {i+1}")
+        # st.write(f"Colors: {', '.join(clothing.get_color_names())}")
 
     # Check outfit for matches
     with st.spinner("Checking for a match..."):
         try:
-            # matches = outfit.get_matches()
-            body = {"outfit": clothes}
+            body = {"outfit": outfit}
             response = requests.post(API_ROUTES["matches"], json=body)
             response.raise_for_status()
             matches = response.json()

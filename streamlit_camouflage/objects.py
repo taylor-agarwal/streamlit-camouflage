@@ -1,7 +1,6 @@
 from io import BytesIO
 from typing import Dict, List, Tuple, NewType
 
-from colorsys import rgb_to_hsv
 import numpy as np
 from PIL import Image
 from rembg import remove, new_session
@@ -11,8 +10,6 @@ from webcolors import (
     CSS3_HEX_TO_NAMES,
     hex_to_rgb,
 )
-
-from streamlit_camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
 
 def get_session():
     return new_session("u2netp")
@@ -99,56 +96,3 @@ class Clothing:
             distance, index = KDT_DB.query(color)
             color_names.append(COLOR_NAMES[index])
         return color_names
-
-    def get_color_rect(self, height: int = 50, width: int = 300) -> np.ndarray:
-        """Get a numpy array of shape (width, height, 3) containing proportional amounts of each color in the
-        clothing image
-
-        Args:
-            height (int, optional): Height of the color rectangle in pixels. Defaults to 50.
-            width (int, optional): Width of the color rectangle in pixels. Defaults to 300.
-
-        Returns:
-            np.ndarray: _description_
-        """
-        if not self.colors:
-            self.extract_colors()
-
-        color_rect = []
-        for color, percent in self.colors.items():
-            color = [c / 255.0 for c in color]
-            color_width = int(percent * width)
-            rect_color = np.zeros([height, color_width, 3])
-            rect_color = np.full_like(rect_color, color)
-            color_rect.append(rect_color)
-        return np.concatenate(color_rect, axis=1)
-
-class Outfit:
-    """Describes a collection of clothing in an outfit"""
-
-    def __init__(self, clothes: List[Clothing]):
-        """
-        Args:
-            clothes (List[Clothing]): List of clothing items in the outfit
-        """
-        self.clothes: List[Clothing] = clothes
-
-    def __iter__(self):
-        return iter(self.clothes)
-
-    def get_matches(self) -> List[str]:
-        """Get names of outfit match types
-
-        Returns:
-            List[str]: List of names of outfit match types
-        """
-        primary_rgbs = [clothing.get_colors()[0] for clothing in self]
-        primary_rgb_norms = [(r/255.0, g/255.0, b/255.0) for r, g, b in primary_rgbs]
-        primary_hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in primary_rgb_norms]
-        primary_hsvs = [(h*360.0, s*100.0, v*100.0) for h, s, v in primary_hsv_norms]
-
-        outfit = [GetColorDesc(hsv) for hsv in primary_hsvs]
-
-        matches = GetValidMatches(outfit)
-
-        return matches

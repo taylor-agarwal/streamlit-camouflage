@@ -1,12 +1,10 @@
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, HTTPException, UploadFile
 from streamlit_camouflage.objects import Clothing
-from typing_extensions import Annotated
 from typing import List
 from colorsys import rgb_to_hsv
 import logging
 import uvicorn
 from pydantic import BaseModel
-import json
 
 from streamlit_camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
 
@@ -20,6 +18,7 @@ class Color(BaseModel):
     r: float
     g: float
     b: float
+    pct: float
 
 class Colors(BaseModel):
     colors: List[Color]
@@ -40,13 +39,12 @@ async def colors(file: UploadFile) -> Colors:
         contents = file.file
         clothing = Clothing(contents)
         clothing.extract_colors()
-        colors = clothing.get_colors()
+        colors = clothing.colors
         colors_json = {
             "colors": [
-                {'r': rgb[0], 'g': rgb[1], 'b': rgb[2]}
-                for rgb in colors
+                {'r': rgb[0], 'g': rgb[1], 'b': rgb[2], 'pct': pct}
+                for rgb, pct in colors.items()
             ]
-            
         }
         file.file.close()
         return colors_json
