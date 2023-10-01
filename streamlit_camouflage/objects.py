@@ -1,8 +1,10 @@
+import io
 from io import BytesIO
 from typing import Dict, List, Tuple, NewType
+import logging
 
 import numpy as np
-from PIL import Image
+from PIL import Image as PILImage
 from rembg import remove, new_session
 from scipy.spatial import KDTree
 from sklearn.cluster import KMeans
@@ -29,6 +31,28 @@ COLOR_NAMES, KDT_DB = get_kdt_db()
 
 Colors = NewType('Colors', Dict[Tuple[float, float, float], float])
 
+logger = logging.getLogger()
+
+
+class Image:
+    """Describes an image."""
+
+    def __init__(self, image_bytes: BytesIO):
+        """
+        Args:
+            image_bytes (BytesIO): Image of the clothing item
+        """
+        self.image_bytes: BytesIO = image_bytes
+        self.image: np.ndarray = PILImage.open(image_bytes).convert('RGB')
+
+    def rembg(self) -> BytesIO:
+        image_rembg = remove(self.image, session=SESSION).convert('RGB')
+        img_byte_arr = io.BytesIO()
+        image_rembg.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+        return img_byte_arr
+
+
 class Clothing:
     """Describes an article of clothing"""
 
@@ -38,13 +62,8 @@ class Clothing:
             image_bytes (BytesIO): Image of the clothing item
         """
         self.image_bytes: BytesIO = image_bytes
-        self.image: np.ndarray = Image.open(image_bytes).convert('RGB')
-        self.image_rembg: np.ndarray = None
+        self.image: np.ndarray = PILImage.open(image_bytes).convert('RGB')
         self.colors: Colors = None
-
-    def rembg(self):
-        """Remove background from the clothing image"""
-        self.image_rembg = remove(self.image, session=SESSION).convert('RGB')
 
     def extract_colors(self, n: float = 4):
         """Extract the colors from clothing image
@@ -52,10 +71,7 @@ class Clothing:
         Args:
             n (float, optional): Number of colors to extract from the image. Defaults to 4.
         """
-        if not self.image_rembg:
-            self.rembg()
-        
-        pixels = np.array([pixel for row in np.array(self.image_rembg) for pixel in row if sum(pixel) != 0])
+        pixels = np.array([pixel for row in np.array(self.image) for pixel in row if sum(pixel) != 0])
     
         # Find clusters of colors to determine dominant colors
         color_cluster = KMeans(n_clusters=n, random_state=1).fit(pixels)
