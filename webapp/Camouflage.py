@@ -7,7 +7,7 @@ import requests
 from PIL import Image as PILImage
 import io
 
-from streamlit_camouflage.webutils import get_color_rect
+from webapp.utils.webutils import get_color_rect
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
@@ -15,7 +15,7 @@ from streamlit_camouflage.webutils import get_color_rect
 tracemalloc.start()
 
 # Declare API endpoints
-API_ENDPOINT = "http://localhost:80"
+API_ENDPOINT = "http://localhost:80/v1"
 API_ROUTES = {
     "colors": API_ENDPOINT + "/colors",
     "matches": API_ENDPOINT + "/matches",
@@ -177,6 +177,7 @@ if len(outfit) > 0:
             response = requests.post(API_ROUTES["matches"], json=body)
             response.raise_for_status()
             matches = response.json()
+            matches = matches['matches']
             system_activity(f"MATCHING - Matches found - {matches}")
         except Exception as e:
             system_error(f"MATCHING - Failed to find outfit matching types", e)

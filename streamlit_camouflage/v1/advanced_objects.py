@@ -13,7 +13,7 @@ from webcolors import (
     hex_to_rgb,
 )
 
-from streamlit_camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
+from streamlit_camouflage.v1.fuzzy_classifier import GetValidMatches, GetColorDesc
 
 @st.cache_resource
 def get_session():
