@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, UploadFile, Response
-from typing import List
-from colorsys import rgb_to_hsv
 import logging
+
+from fastapi import APIRouter, HTTPException, UploadFile, Response
+from colorsys import rgb_to_hsv
 
 from streamlit_camouflage.v1.objects import Clothing, Image
 from streamlit_camouflage.v1.models import Colors, Matches, Outfit
@@ -58,7 +58,6 @@ async def colors(file: UploadFile):
 
         # Build the response
         response = Colors(colors=color_dicts)
-        contents.close()
         return response
     except Exception as e:
         file.file.close()

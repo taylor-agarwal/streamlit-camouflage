@@ -1,5 +1,6 @@
 import logging
 import tracemalloc
+from typing import List
 
 import numpy as np
 import streamlit as st
@@ -7,49 +8,13 @@ import requests
 from PIL import Image as PILImage
 import io
 
+from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, API_ROUTES, OUTFIT_DESCRIPTIONS
 from webapp.utils.webutils import get_color_rect
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
 # Start memory tracing
 tracemalloc.start()
-
-# Declare API endpoints
-API_ENDPOINT = "http://localhost:80/v1"
-API_ROUTES = {
-    "colors": API_ENDPOINT + "/colors",
-    "matches": API_ENDPOINT + "/matches",
-    "rembg": API_ENDPOINT + "/rembg"
-}
-
-# Write outfit descriptions
-outfit_descriptions = {
-    "Basic": """
-- No more than one bright color
-- No high contrast between colors (bright warm + dark cool)
-- Any number of neutral colors
-""",
-    "Neutral": """
-- Only neutral colors
-""",
-    "Analogous": """
-- All colors must be within the same temp.
-- Any number of neutral colors
-""",
-    "Contrast": """
-- At least one warm color
-- Both dark and bright colors present
-""",
-    "Summer": """
-- At least two warm colors
-- At least one bright color
-- At most one dark color
-""",
-    "Winter": """
-- At least one dark color
-- No bright colors
-"""
-}
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -80,13 +45,7 @@ def system_error(message, e):
 system_activity("START")
 
 # Hide streamlit header and footer
-hide_footer_style = """
-    <style>
-    footer {visibility: hidden;} 
-    #MainMenu {visibility: hidden;} 
-    </style>  
-"""
-st.markdown(hide_footer_style, unsafe_allow_html=True)
+st.markdown(HIDE_FOOTER_STYLE, unsafe_allow_html=True)
 
 # Create title
 col1, col2, col3 = st.columns(3)
@@ -98,31 +57,22 @@ with col2:
 with col3:
     st.write(' ')
 
-title = """
-<center>
-<h1>Welcome to Camouflage!</h1>
-<h5><em>Helping the Colorblind Blend In</em></h5>
-<text>If you do not see the logo above, please refresh the page</text>
-</center>
-"""
-
-st.write(title, unsafe_allow_html=True)
+st.write(TITLE_HTML, unsafe_allow_html=True)
 
 # User select number of images
-num_images = st.selectbox("Number of Clothing Items", [0, 1, 2, 3, 4], on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
+num_images = st.selectbox("Number of Clothing Items", CLOTHING_NUMBER_CHOICES, on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
 
 # Generate camera input dialogues
-images = [None]
+images = []
 if int(num_images) > 0:
     system_activity(f"NUMBER INPUT - {num_images} items selected")
     num_images = int(num_images)
-    images = []
     for i in range(num_images):
         image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
         images.append(image)
 
-# If all the images have been taken, start processing them and put them in an outfit
-images_taken = not any([image is None for image in images])
+# If all the images have been taken, start processing them
+images_taken = (len(images) > 0) and (all([image is not None for image in images]))
 images_rembg = []
 if images_taken:
     st.header("Cropped Images")
@@ -137,8 +87,8 @@ if images_taken:
                 response.raise_for_status()
                 im = io.BytesIO(response.content)
                 image_rembg = PILImage.open(im).convert('RGB')
-                images_rembg.append(im)
-                st.image(images_rembg, caption=f"From Item {i+1}")
+                images_rembg.append(response.content)
+                st.image(image_rembg, caption=f"From Item {i+1}")
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
             except Exception as e:
                 system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images", e)
@@ -154,7 +104,7 @@ if len(images_rembg) > 0:
         for i, image in enumerate(images_rembg):
             try:
                 files = {'file': image}
-                response = requests.post(API_ROUTES["colors"], files=files)
+                response = requests.post(API_ROUTES["colors"], files=files, stream=True)
                 response.raise_for_status()
                 colors = response.json()
                 system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors}")
@@ -187,7 +137,7 @@ if len(outfit) > 0:
         st.header("This outfit is...")
         for match in matches:
             st.subheader(match)
-            st.markdown(outfit_descriptions[match])
+            st.markdown(OUTFIT_DESCRIPTIONS[match])
 
         st.write(f"Results are based on the primary color of each clothing item only.")
 
