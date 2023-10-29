@@ -1,5 +1,5 @@
 # Declare API endpoints
-API_ENDPOINT = "http://localhost:80/v1"
+API_ENDPOINT = "http://playground-web-backend:8080/v1"
 API_ROUTES = {
     "colors": API_ENDPOINT + "/colors",
     "matches": API_ENDPOINT + "/matches",

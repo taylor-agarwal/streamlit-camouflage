@@ -1,4 +1,5 @@
 import logging
+import sys
 import tracemalloc
 from typing import List
 
@@ -7,6 +8,8 @@ import streamlit as st
 import requests
 from PIL import Image as PILImage
 import io
+
+sys.path.insert(0, ".")
 
 from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, API_ROUTES, OUTFIT_DESCRIPTIONS
 from webapp.utils.webutils import get_color_rect
