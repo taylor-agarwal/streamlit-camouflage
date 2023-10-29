@@ -66,18 +66,26 @@ images = []
 if int(num_images) > 0:
     system_activity(f"NUMBER INPUT - {num_images} items selected")
     num_images = int(num_images)
+    image_col1, image_col2 = st.columns(2)
     for i in range(num_images):
-        image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
+        if i % 2 == 0:
+            col = image_col1
+        else:
+            col = image_col2
+        with col:
+            image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
         images.append(image)
 
 # If all the images have been taken, start processing them
 images_taken = (len(images) > 0) and (all([image is not None for image in images]))
 images_rembg = []
 if images_taken:
-    st.header("Cropped Images")
+    progress_bar = st.progress(0, "Extracting Clothes...")
     system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
-    with st.spinner("Extracting Clothes..."):
+    with st.expander("View Extracted Clothes"):
+        st.header("Cropped Images")
         # Save clothes and remove backgrounds
+        rembg_tabs = st.tabs([f"Image {i+1}" for i in range(len(images))])
         for i, image in enumerate(images):
             try:
                 # Remove background from image
@@ -87,19 +95,23 @@ if images_taken:
                 im = io.BytesIO(response.content)
                 image_rembg = PILImage.open(im).convert('RGB')
                 images_rembg.append(response.content)
-                st.image(image_rembg, caption=f"From Item {i+1}")
+                with rembg_tabs[i]:
+                    st.image(image_rembg)
                 system_activity(f"CLOTHING EXTRACTION - {i+1} - Extracted clothes from image")
             except Exception as e:
                 system_error(f"CLOTHING EXTRACTION - {i+1} - Error extracting clothes from images", e)
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
-# Display the colors from the item
+# Display the colors from the items
 outfit = []
 if len(images_rembg) > 0:
-    st.header("Extracted Colors")
+    progress_bar.progress(50, "Extracting Colors...")
     system_activity("COLOR EXTRACTION - Extracting colors from all images")
-    with st.spinner("Extracting Colors..."):
+    with st.expander("View Extracted Colors"):
+        st.header("Extracted Colors")
+        # Extract and save colors
+        color_tabs = st.tabs([f"Image {i+1}" for i in range(len(images))])
         for i, image in enumerate(images_rembg):
             try:
                 files = {'file': image}
@@ -109,16 +121,19 @@ if len(images_rembg) > 0:
                 system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors}")
                 outfit.append(colors)
                 rect = get_color_rect(colors['colors'])
-                st.image(rect, caption=f"Colors From Item {i+1}")
-                st.write(f"Colors: {', '.join([color['name'] for color in colors['colors']])}")
+                with color_tabs[i]:
+                    st.image(rect)
+                    st.write(f"Colors: {', '.join([color['name'] for color in colors['colors']])}")
             except Exception as e:
                 system_error(f"COLOR EXTRACTION - {i+1} - Error extracting colors from images", e)
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
 
-# If the outfit is created, try extracting and displaying the colors from each clothing item
+# Determine if the colors are a match
+matches = None
 if len(outfit) > 0:
+    progress_bar.progress(90, "Determining match...")
     # Check outfit for matches
     with st.spinner("Checking for a match..."):
         try:
@@ -146,6 +161,9 @@ if len(outfit) > 0:
         else:
             st.header("It's not a match :(")
             system_activity("RESULT - No Match")
+
+if matches is not None:
+    progress_bar.progress(100, "Complete!")
 
 # Show feedback link
 if outfit:
