@@ -1,0 +1,16 @@
+version: '3'
+services:
+  playground-web-backend:
+    image: streamlit-camouflage-backend:latest
+    environment:
+      PORT: 8080
+    ports:
+      - 8080:8080
+  playground-web-frontend:
+    image: streamlit-camouflage-frontend:latest
+    environment:
+      PORT: 8501
+    ports:
+      - 8501:8501
+    links:
+      - playground-web-backend

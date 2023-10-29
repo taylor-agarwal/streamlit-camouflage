@@ -1,17 +1,14 @@
 # From https://github.com/FCARRILLOM/ClassifyingColorMatchingOutfits/blob/main/ColorMeMedium.ipynb
 
 import numpy as np
-import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
-import streamlit as st
 
 hue_fuzzy = ['WARM', 'COOL', 'WARM_']
 sat_fuzzy = ['GRAY', 'VERY_FADED', 'FADED', 'SATURATED', 'VERY_SATURATED']
 val_fuzzy = ['BLACK', 'VERY_DARK', 'DARK', 'BRIGHT', 'VERY_BRIGHT']
 tone_fuzzy = ['NEUTRAL', 'DARK', 'BRIGHT']
 
-@st.cache_resource
 def get_tone_hue():
     """
     Antecedents HSV

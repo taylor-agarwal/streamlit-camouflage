@@ -1,25 +1,21 @@
+import io
 from io import BytesIO
 from typing import Dict, List, Tuple, NewType
+import logging
 
-from colorsys import rgb_to_hsv
 import numpy as np
-from PIL import Image
+from PIL import Image as PILImage
 from rembg import remove, new_session
 from scipy.spatial import KDTree
 from sklearn.cluster import KMeans
-import streamlit as st
 from webcolors import (
     CSS3_HEX_TO_NAMES,
     hex_to_rgb,
 )
 
-from camouflage.fuzzy_classifier import GetValidMatches, GetColorDesc
-
-@st.cache_resource
 def get_session():
     return new_session("u2netp")
 
-@st.cache_resource
 def get_kdt_db():
     names = []
     rgb_values = []
@@ -35,6 +31,28 @@ COLOR_NAMES, KDT_DB = get_kdt_db()
 
 Colors = NewType('Colors', Dict[Tuple[float, float, float], float])
 
+logger = logging.getLogger()
+
+
+class Image:
+    """Describes an image."""
+
+    def __init__(self, image_bytes: BytesIO):
+        """
+        Args:
+            image_bytes (BytesIO): Image of the clothing item
+        """
+        self.image_bytes: BytesIO = image_bytes
+        self.image: np.ndarray = PILImage.open(image_bytes).convert('RGB')
+
+    def rembg(self) -> BytesIO:
+        image_rembg = remove(self.image, session=SESSION).convert('RGB')
+        img_byte_arr = io.BytesIO()
+        image_rembg.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+        return img_byte_arr
+
+
 class Clothing:
     """Describes an article of clothing"""
 
@@ -44,13 +62,8 @@ class Clothing:
             image_bytes (BytesIO): Image of the clothing item
         """
         self.image_bytes: BytesIO = image_bytes
-        self.image: np.ndarray = Image.open(image_bytes).convert('RGB')
-        self.image_rembg: np.ndarray = None
+        self.image: np.ndarray = PILImage.open(image_bytes).convert('RGB')
         self.colors: Colors = None
-
-    def rembg(self):
-        """Remove background from the clothing image"""
-        self.image_rembg = remove(self.image, session=SESSION).convert('RGB')
 
     def extract_colors(self, n: float = 4):
         """Extract the colors from clothing image
@@ -58,10 +71,7 @@ class Clothing:
         Args:
             n (float, optional): Number of colors to extract from the image. Defaults to 4.
         """
-        if not self.image_rembg:
-            self.rembg()
-        
-        pixels = np.array([pixel for row in np.array(self.image_rembg) for pixel in row if sum(pixel) != 0])
+        pixels = np.array([pixel for row in np.array(self.image) for pixel in row if sum(pixel) != 0])
     
         # Find clusters of colors to determine dominant colors
         color_cluster = KMeans(n_clusters=n, random_state=1).fit(pixels)
@@ -102,56 +112,3 @@ class Clothing:
             distance, index = KDT_DB.query(color)
             color_names.append(COLOR_NAMES[index])
         return color_names
-
-    def get_color_rect(self, height: int = 50, width: int = 300) -> np.ndarray:
-        """Get a numpy array of shape (width, height, 3) containing proportional amounts of each color in the
-        clothing image
-
-        Args:
-            height (int, optional): Height of the color rectangle in pixels. Defaults to 50.
-            width (int, optional): Width of the color rectangle in pixels. Defaults to 300.
-
-        Returns:
-            np.ndarray: _description_
-        """
-        if not self.colors:
-            self.extract_colors()
-
-        color_rect = []
-        for color, percent in self.colors.items():
-            color = [c / 255.0 for c in color]
-            color_width = int(percent * width)
-            rect_color = np.zeros([height, color_width, 3])
-            rect_color = np.full_like(rect_color, color)
-            color_rect.append(rect_color)
-        return np.concatenate(color_rect, axis=1)
-
-class Outfit:
-    """Describes a collection of clothing in an outfit"""
-
-    def __init__(self, clothes: List[Clothing]):
-        """
-        Args:
-            clothes (List[Clothing]): List of clothing items in the outfit
-        """
-        self.clothes: List[Clothing] = clothes
-
-    def __iter__(self):
-        return iter(self.clothes)
-
-    def get_matches(self) -> List[str]:
-        """Get names of outfit match types
-
-        Returns:
-            List[str]: List of names of outfit match types
-        """
-        primary_rgbs = [clothing.get_colors()[0] for clothing in self]
-        primary_rgb_norms = [(r/255.0, g/255.0, b/255.0) for r, g, b in primary_rgbs]
-        primary_hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in primary_rgb_norms]
-        primary_hsvs = [(h*360.0, s*100.0, v*100.0) for h, s, v in primary_hsv_norms]
-
-        outfit = [GetColorDesc(hsv) for hsv in primary_hsvs]
-
-        matches = GetValidMatches(outfit)
-
-        return matches
