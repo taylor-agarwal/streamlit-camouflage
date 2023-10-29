@@ -1,6 +1,5 @@
 import logging
 import sys
-import tracemalloc
 from typing import List
 
 import numpy as np
@@ -15,9 +14,6 @@ from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBE
 from webapp.utils.webutils import get_color_rect
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
-
-# Start memory tracing
-tracemalloc.start()
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -158,5 +154,3 @@ if outfit:
 
 # Log memory usage
 system_activity("END")
-system_activity(f"Memory allocation (current, peak): {tracemalloc.get_traced_memory()}")
-tracemalloc.stop()
