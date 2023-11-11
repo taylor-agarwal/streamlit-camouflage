@@ -50,4 +50,4 @@ TITLE_HTML = """
 </center>
 """
 
-CLOTHING_NUMBER_CHOICES = [0, 1, 2, 3, 4]
+CLOTHING_NUMBER_CHOICES = [2, 3, 4]
