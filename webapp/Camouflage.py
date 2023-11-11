@@ -83,7 +83,6 @@ if images_taken:
     progress_bar = st.progress(0, "Extracting Clothes...")
     system_activity("CLOTHING EXTRACTION - All images collected, beginning clothing extraction")
     with st.expander("View Extracted Clothes"):
-        st.header("Cropped Images")
         # Save clothes and remove backgrounds
         rembg_tabs = st.tabs([f"Image {i+1}" for i in range(len(images))])
         for i, image in enumerate(images):
@@ -109,7 +108,6 @@ if len(images_rembg) > 0:
     progress_bar.progress(50, "Extracting Colors...")
     system_activity("COLOR EXTRACTION - Extracting colors from all images")
     with st.expander("View Extracted Colors"):
-        st.header("Extracted Colors")
         # Extract and save colors
         color_tabs = st.tabs([f"Image {i+1}" for i in range(len(images))])
         for i, image in enumerate(images_rembg):
