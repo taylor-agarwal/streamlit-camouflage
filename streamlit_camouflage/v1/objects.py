@@ -43,9 +43,9 @@ class Image:
             image_bytes (BytesIO): Image of the clothing item
         """
         self.image_bytes: BytesIO = image_bytes
-        self.image: np.ndarray = PILImage.open(image_bytes).convert('RGB')
+        self.image: PILImage.Image = PILImage.open(image_bytes).convert('RGB')
 
-    def rembg(self) -> BytesIO:
+    def rembg(self) -> bytes:
         image_rembg = remove(self.image, session=SESSION).convert('RGB')
         img_byte_arr = io.BytesIO()
         image_rembg.save(img_byte_arr, format='PNG')
@@ -71,10 +71,11 @@ class Clothing:
         Args:
             n (float, optional): Number of colors to extract from the image. Defaults to 4.
         """
+        # Decompose image into pixels
         pixels = np.array([pixel for row in np.array(self.image) for pixel in row if sum(pixel) != 0])
     
         # Find clusters of colors to determine dominant colors
-        color_cluster = KMeans(n_clusters=n, random_state=1).fit(pixels)
+        color_cluster = KMeans(n_clusters=n, random_state=1, n_init=10).fit(pixels)
         cluster, colors = color_cluster, color_cluster.cluster_centers_
         
         # Compute the percent of the pixels containing that color
