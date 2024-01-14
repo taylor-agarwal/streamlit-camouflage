@@ -1,6 +1,14 @@
 import numpy as np
 from typing import List
 
+
+def rgb_to_hex(rgb):
+    _rgb = tuple([int(c) for c in rgb])
+    print(_rgb)
+    hex = '#%02x%02x%02x' % _rgb
+    return hex
+
+
 def get_color_rect(colors: List[dict], height: int = 50, width: int = 300) -> np.ndarray:
     """Get a numpy array of shape (width, height, 3) containing proportional amounts of each color in the
     clothing image

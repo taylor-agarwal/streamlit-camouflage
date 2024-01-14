@@ -10,8 +10,8 @@ import io
 
 sys.path.insert(0, ".")
 
-from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, API_ROUTES, OUTFIT_DESCRIPTIONS
-from webapp.utils.webutils import get_color_rect
+from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, API_ROUTES, OUTFIT_DESCRIPTIONS, ENVIRONMENT
+from webapp.utils.webutils import get_color_rect, rgb_to_hex
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
 
@@ -44,7 +44,8 @@ def system_error(message, e):
 system_activity("START")
 
 # Hide streamlit header and footer
-st.markdown(HIDE_FOOTER_STYLE, unsafe_allow_html=True)
+if ENVIRONMENT == "prod":
+    st.markdown(HIDE_FOOTER_STYLE, unsafe_allow_html=True)
 
 # Create title
 col1, col2, col3 = st.columns(3)
@@ -103,6 +104,7 @@ if images_taken:
                 st.stop()
 
 # Display the colors from the items
+# https://blog.streamlit.io/create-a-color-palette-from-any-image/ 
 outfit = []
 if len(images_rembg) > 0:
     progress_bar.progress(50, "Extracting Colors...")
@@ -117,11 +119,18 @@ if len(images_rembg) > 0:
                 response.raise_for_status()
                 colors = response.json()
                 system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors}")
-                outfit.append(colors)
                 rect = get_color_rect(colors['colors'])
                 with color_tabs[i]:
                     st.image(rect)
                     st.write(f"Colors: {', '.join([color['name'] for color in colors['colors']])}")
+                    columns = st.columns(len(colors['colors']))
+                    for i, column in enumerate(columns):
+                        with column:
+                            color = colors['colors'][i]
+                            rgb = (color['r'], color['g'], color['b'])
+                            hex = rgb_to_hex(rgb)
+                            st.color_picker(label=hex, value=hex)
+                outfit.append(colors)
             except Exception as e:
                 system_error(f"COLOR EXTRACTION - {i+1} - Error extracting colors from images", e)
                 st.error("Unable to extract clothes. Please try again.")
