@@ -1,5 +1,17 @@
+import os
+
+from dotenv import load_dotenv
+
+if os.environ.get("ENVIRONMENT") is None:
+    load_dotenv()
+
+ENVIRONMENT = os.environ.get("ENVIRONMENT")
+
 # Declare API endpoints
-API_ENDPOINT = "http://playground-web-backend:8080/v1"
+if ENVIRONMENT == "prod":
+    API_ENDPOINT = "http://playground-web-backend:8080/v1"
+else:
+    API_ENDPOINT = "http://localhost:8080/v1"
 API_ROUTES = {
     "colors": API_ENDPOINT + "/colors",
     "matches": API_ENDPOINT + "/matches",

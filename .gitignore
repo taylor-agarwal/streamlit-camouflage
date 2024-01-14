@@ -2,3 +2,4 @@ venv
 __pycache__
 .justfile
 streamlit-image-select
+.env
