@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, Response
 from colorsys import rgb_to_hsv
 
 from streamlit_camouflage.v1.objects import Clothing, Image
-from streamlit_camouflage.v1.models import Colors, Matches, Outfit
+from streamlit_camouflage.v1.api_spec import Colors, Matches, Outfit
 from streamlit_camouflage.v1.fuzzy_classifier import GetValidMatches, GetColorDesc
 
 router = APIRouter()
