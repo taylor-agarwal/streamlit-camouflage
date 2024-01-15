@@ -6,6 +6,7 @@ from colorsys import rgb_to_hsv
 from streamlit_camouflage.v1.objects import Clothing, Image
 from streamlit_camouflage.v1.api_spec import Colors, Matches, Outfit
 from streamlit_camouflage.v1.fuzzy_classifier import GetValidMatches, GetColorDesc
+from streamlit_camouflage.v1.utils import rgb_to_hex
 
 router = APIRouter()
 
@@ -52,7 +53,7 @@ async def colors(file: UploadFile):
         colors = clothing.colors
         color_names = clothing.get_color_names()
         color_dicts = [
-            {'r': rgb[0], 'g': rgb[1], 'b': rgb[2], 'pct': pct, 'name': color_names[i]}
+            {'r': rgb[0], 'g': rgb[1], 'b': rgb[2], 'hex': rgb_to_hex(rgb), 'pct': pct, 'name': color_names[i]}
             for i, (rgb, pct) in enumerate(colors.items())
         ]
 
@@ -66,16 +67,15 @@ async def colors(file: UploadFile):
         
 
 @router.post("/matches", response_model=Matches)
-async def matches(outfit: Outfit):
+async def matches(colors: Colors):
     try:
         # Get the HSV values for the primary colors
-        primary_rgbs = [c.colors[0] for c in outfit.outfit]
-        primary_rgb_norms = [(rgb.r/255.0, rgb.g/255.0, rgb.b/255.0) for rgb in primary_rgbs]
-        primary_hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in primary_rgb_norms]
-        primary_hsvs = [(h*360.0, s*100.0, v*100.0) for h, s, v in primary_hsv_norms]
+        rgb_norms = [(rgb.r/255.0, rgb.g/255.0, rgb.b/255.0) for rgb in colors.colors]
+        hsv_norms = [rgb_to_hsv(r, g, b) for r, g, b in rgb_norms]
+        hsvs = [(h*360.0, s*100.0, v*100.0) for h, s, v in hsv_norms]
 
         # Get a description of the color, in tuples of (TONE, TEMP)
-        outfit_color_descs = [GetColorDesc(hsv) for hsv in primary_hsvs]
+        outfit_color_descs = [GetColorDesc(hsv) for hsv in hsvs]
 
         # Get matches for the given colors
         matches = GetValidMatches(outfit_color_descs)

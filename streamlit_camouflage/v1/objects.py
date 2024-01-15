@@ -33,7 +33,6 @@ Colors = NewType('Colors', Dict[Tuple[float, float, float], float])
 
 logger = logging.getLogger()
 
-
 class Image:
     """Describes an image."""
 

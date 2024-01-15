@@ -6,6 +6,7 @@ class Color(BaseModel):
     r: float
     g: float
     b: float
+    hex: str
     pct: float
     name: str
 

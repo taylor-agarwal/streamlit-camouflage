@@ -11,9 +11,12 @@ import io
 sys.path.insert(0, ".")
 
 from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, API_ROUTES, OUTFIT_DESCRIPTIONS, ENVIRONMENT
-from webapp.utils.webutils import get_color_rect, rgb_to_hex
+from webapp.utils.webutils import get_color_rect
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
+# TODO: Make each tab a different image, with extracted colors and color picking below them
+# TODO: Display the chosen colors side-by-side above the outcome
+# TODO: Add the match descriptions to a help box next to the match titles or a collapsible ("What does this mean?")
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -103,9 +106,10 @@ if images_taken:
                 st.error("Unable to extract clothes. Please try again.")
                 st.stop()
 
+# TODO: Consider storing colors and only rerunning above lines if the images change - st.session_state colors with callback on images on_change
 # Display the colors from the items
 # https://blog.streamlit.io/create-a-color-palette-from-any-image/ 
-outfit = []
+chosen_colors = []
 if len(images_rembg) > 0:
     progress_bar.progress(50, "Extracting Colors...")
     system_activity("COLOR EXTRACTION - Extracting colors from all images")
@@ -117,20 +121,23 @@ if len(images_rembg) > 0:
                 files = {'file': image}
                 response = requests.post(API_ROUTES["colors"], files=files, stream=True)
                 response.raise_for_status()
-                colors = response.json()
-                system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors}")
-                rect = get_color_rect(colors['colors'])
+                colors_json = response.json()
+                system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors_json}")
+                colors = colors_json['colors']
+                rect = get_color_rect(colors)
                 with color_tabs[i]:
                     st.image(rect)
-                    st.write(f"Colors: {', '.join([color['name'] for color in colors['colors']])}")
-                    columns = st.columns(len(colors['colors']))
-                    for i, column in enumerate(columns):
+                    st.write(f"Colors: {', '.join([color['name'] for color in colors])}")
+                    columns = st.columns(len(colors))
+                    colors_hex = [color['hex'] for color in colors]
+                    for j, column in enumerate(columns):
                         with column:
-                            color = colors['colors'][i]
-                            rgb = (color['r'], color['g'], color['b'])
-                            hex = rgb_to_hex(rgb)
+                            hex = colors_hex[j]
                             st.color_picker(label=hex, value=hex)
-                outfit.append(colors)
+                            default = True if j == 0 else False
+                            picked = st.checkbox(label=f"color_choice_{i}_{j}", value=default, label_visibility="hidden")
+                            if picked:
+                                chosen_colors.append(colors[j])
             except Exception as e:
                 system_error(f"COLOR EXTRACTION - {i+1} - Error extracting colors from images", e)
                 st.error("Unable to extract clothes. Please try again.")
@@ -139,12 +146,12 @@ if len(images_rembg) > 0:
 
 # Determine if the colors are a match
 matches = None
-if len(outfit) > 0:
+if len(chosen_colors) > 0:
     progress_bar.progress(90, "Determining match...")
     # Check outfit for matches
     with st.spinner("Checking for a match..."):
         try:
-            body = {"outfit": outfit}
+            body = {"colors": chosen_colors}
             response = requests.post(API_ROUTES["matches"], json=body)
             response.raise_for_status()
             matches = response.json()
@@ -172,10 +179,8 @@ if len(outfit) > 0:
 if matches is not None:
     progress_bar.progress(100, "Complete!")
 
-# Show feedback link
-if outfit:
+    # Show feedback link
     with st.container():
         st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
 
-# Log memory usage
 system_activity("END")
