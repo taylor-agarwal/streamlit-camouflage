@@ -16,7 +16,6 @@ from webapp.utils.webutils import get_color_rect
 # TODO: Make it so if all pixels are black, it returns the whole black image
 # TODO: Make each tab a different image, with extracted colors and color picking below them
 # TODO: Display the chosen colors side-by-side above the outcome
-# TODO: Add the match descriptions to a help box next to the match titles or a collapsible ("What does this mean?")
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -164,10 +163,7 @@ if len(chosen_colors) > 0:
         
         st.header("This outfit is...")
         for match in matches:
-            st.subheader(match)
-            st.markdown(OUTFIT_DESCRIPTIONS[match])
-
-        st.write(f"Results are based on the primary color of each clothing item only.")
+            st.subheader(match, help=OUTFIT_DESCRIPTIONS[match])
 
         if len(matches) > 0:
             st.header("It's a match!")
