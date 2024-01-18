@@ -92,64 +92,67 @@ for i, tab in enumerate(tabs):
             colors_json = response.json()
             system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors_json}")
             colors = colors_json['colors']
-            rect = get_color_rect(colors)
-            st.image(rect)
-            st.write(f"Colors: {', '.join([color['name'] for color in colors])}")
             columns = st.columns(len(colors))
+            colors_name = [color['name'] for color in colors]
             colors_hex = [color['hex'] for color in colors]
             for j, column in enumerate(columns):
                 with column:
                     hex = colors_hex[j]
-                    st.color_picker(label=hex, value=hex)
+                    name = colors_name[j]
+                    st.color_picker(label=name, value=hex, key=f"color_picker_{i}_{j}")
                     default = True if j == 0 else False
                     picked = st.checkbox(label=f"color_choice_{i}_{j}", value=default, label_visibility="hidden")
                     if picked:
                         chosen_colors.append(colors[j])
 
+submitted = st.button("Check My Outfit!", use_container_width=True)
+
 # TODO: Consider storing colors and only rerunning above lines if the images change - st.session_state colors with callback on images on_change
 # Display the colors from the items
 # https://blog.streamlit.io/create-a-color-palette-from-any-image/ 
 
-# Determine if the colors are a match
-matches = None
-if len(chosen_colors) > 0:
-    width = 500
-    height = 200
-    for c in chosen_colors:
-        c['pct'] = 1 / len(chosen_colors)
-    rect = get_color_rect(colors=chosen_colors, width=width, height=height)
-    _, col, _ = st.columns([1, 4, 1])
-    with col:
-        with st.container(border=True):
-            st.image(rect, use_column_width=True)
-    # Check outfit for matches
-    with st.spinner("Checking for a match..."):
-        try:
-            body = {"colors": chosen_colors}
-            response = requests.post(API_ROUTES["matches"], json=body)
-            response.raise_for_status()
-            matches = response.json()
-            matches = matches['matches']
-            system_activity(f"MATCHING - Matches found - {matches}")
-        except Exception as e:
-            system_error(f"MATCHING - Failed to find outfit matching types", e)
-            st.error("Unable to check a match. Please try again.")
-            st.stop()
-        
-        st.header("This outfit is...")
-        for match in matches:
-            st.subheader(match, help=OUTFIT_DESCRIPTIONS[match])
+if submitted:
+    with st.spinner("Checking..."):
+        st.divider()
+        # Determine if the colors are a match
+        matches = None
+        if len(chosen_colors) > 0:
+            width = 500
+            height = 200
+            for c in chosen_colors:
+                c['pct'] = 1 / len(chosen_colors)
+            rect = get_color_rect(colors=chosen_colors, width=width, height=height)
+            _, col, _ = st.columns([1, 4, 1])
+            with col:
+                with st.container(border=True):
+                    st.image(rect, use_column_width=True)
+            # Check outfit for matches
+            with st.spinner("Checking for a match..."):
+                try:
+                    body = {"colors": chosen_colors}
+                    response = requests.post(API_ROUTES["matches"], json=body)
+                    response.raise_for_status()
+                    matches = response.json()
+                    matches = matches['matches']
+                    system_activity(f"MATCHING - Matches found - {matches}")
+                except Exception as e:
+                    system_error(f"MATCHING - Failed to find outfit matching types", e)
+                    st.error("Unable to check a match. Please try again.")
+                    st.stop()
+                
+                st.header("This outfit is...")
+                for match in matches:
+                    st.subheader(match, help=OUTFIT_DESCRIPTIONS[match])
 
-        if len(matches) > 0:
-            st.header("It's a match!")
-            system_activity("RESULT - Match")
-        else:
-            st.header("It's not a match :(")
-            system_activity("RESULT - No Match")
+                if len(matches) > 0:
+                    st.header("It's a match!")
+                    system_activity("RESULT - Match")
+                else:
+                    st.header("It's not a match :(")
+                    system_activity("RESULT - No Match")
 
-if matches is not None:
-    # Show feedback link
-    with st.container():
-        st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
+# Show feedback link
+with st.container():
+    st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
 
 system_activity("END")
