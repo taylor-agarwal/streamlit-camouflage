@@ -105,6 +105,17 @@ for i, tab in enumerate(tabs):
                     if picked:
                         chosen_colors.append(colors[j])
 
+if len(chosen_colors) > 0:
+    width = 500
+    height = 200
+    for c in chosen_colors:
+        c['pct'] = 1 / len(chosen_colors)
+    rect = get_color_rect(colors=chosen_colors, width=width, height=height)
+    _, col, _ = st.columns([1, 4, 1])
+    with col:
+        with st.container(border=True):
+            st.image(rect, use_column_width=True)
+
 submitted = st.button("Check My Outfit!", use_container_width=True)
 
 # TODO: Consider storing colors and only rerunning above lines if the images change - st.session_state colors with callback on images on_change
@@ -117,15 +128,6 @@ if submitted:
         # Determine if the colors are a match
         matches = None
         if len(chosen_colors) > 0:
-            width = 500
-            height = 200
-            for c in chosen_colors:
-                c['pct'] = 1 / len(chosen_colors)
-            rect = get_color_rect(colors=chosen_colors, width=width, height=height)
-            _, col, _ = st.columns([1, 4, 1])
-            with col:
-                with st.container(border=True):
-                    st.image(rect, use_column_width=True)
             # Check outfit for matches
             with st.spinner("Checking for a match..."):
                 try:
@@ -150,6 +152,8 @@ if submitted:
                 else:
                     st.header("It's not a match :(")
                     system_activity("RESULT - No Match")
+        else:
+            st.warning("No colors selected - Please take your image(s) and select some colors before continuing")
 
 # Show feedback link
 with st.container():
