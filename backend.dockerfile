@@ -30,4 +30,4 @@ WORKDIR /app
 
 EXPOSE 8080
 
-CMD ["uvicorn", "streamlit_camouflage.api:app", "--host", ${ADDRESS}, "--port", ${PORT}]
+CMD ["uvicorn", "streamlit_camouflage.api:app", "--host", "${ADDRESS}", "--port", "${PORT}"]
