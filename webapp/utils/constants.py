@@ -9,7 +9,7 @@ ENVIRONMENT = os.environ.get("ENVIRONMENT")
 
 # Declare API endpoints
 if ENVIRONMENT == "prod":
-    API_ENDPOINT = "http://playground-web-backend:8080/v1"
+    API_ENDPOINT = os.environ.get("API_ENDPOINT")
 else:
     API_ENDPOINT = "http://localhost:8080/v1"
 API_ROUTES = {
