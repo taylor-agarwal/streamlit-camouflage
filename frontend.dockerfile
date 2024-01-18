@@ -31,4 +31,4 @@ COPY images /app/images
 
 EXPOSE 8501
 
-ENTRYPOINT ["streamlit", "run", "/app/webapp/Camouflage.py", "--server.port=$PORT", "--server.address=$ADDRESS"]
+ENTRYPOINT ["streamlit", "run", "/app/webapp/Camouflage.py", "--server.port=${PORT}", "--server.address=${ADDRESS}"]
