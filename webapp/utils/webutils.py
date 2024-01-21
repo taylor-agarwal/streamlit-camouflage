@@ -35,7 +35,7 @@ def get_color_rect(colors: List[dict], height: int = 50, width: int = 300) -> np
         color_rect.append(rect_color)
     return np.concatenate(color_rect, axis=1)
 
-@st.cache_resource
+@st.cache_resource(show_spinner=False)
 def api_request(route: str, files: dict = None, json: dict = None):
     response = requests.post(API_ROUTES[route], files=files, json=json, stream=True)
     response.raise_for_status()
