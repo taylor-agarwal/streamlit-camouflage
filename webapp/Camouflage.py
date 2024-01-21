@@ -4,18 +4,15 @@ from typing import List
 
 import numpy as np
 import streamlit as st
-import requests
-from PIL import Image as PILImage
-import io
+from PIL import Image
 
 sys.path.insert(0, ".")
 
-from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, API_ROUTES, OUTFIT_DESCRIPTIONS, ENVIRONMENT
-from webapp.utils.webutils import get_color_rect
+from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, OUTFIT_DESCRIPTIONS, COLUMN_STYLE
+from webapp.utils.webutils import get_color_rect, api_request
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
-# TODO: Make each tab a different image, with extracted colors and color picking below them
-# TODO: Display the chosen colors side-by-side above the outcome
+# TODO: Improve the theme (white and light green/tan?)
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -46,20 +43,17 @@ def system_error(message, e):
 system_activity("START")
 
 # Hide streamlit header and footer
-if ENVIRONMENT == "prod":
-    st.markdown(HIDE_FOOTER_STYLE, unsafe_allow_html=True)
+st.markdown(HIDE_FOOTER_STYLE, unsafe_allow_html=True)
 
-# Create title
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.write(' ')
-with col2:
-    st.image("images/logo.png")
-with col3:
-    st.write(' ')
+st.write(COLUMN_STYLE, unsafe_allow_html=True)
 
 st.write(TITLE_HTML, unsafe_allow_html=True)
+
+st.markdown("##")
+
+help_clicked = st.button(label="How do I use this app?", use_container_width=True)
+if help_clicked:
+    st.switch_page("pages/About.py")
 
 # User select number of images
 num_images = st.selectbox("Number of Clothing Items", CLOTHING_NUMBER_CHOICES, on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
@@ -78,8 +72,8 @@ for i, tab in enumerate(tabs):
         if image is not None:
             # Remove background from image
             files = {"file": image}
-            response = requests.post(API_ROUTES["rembg"], files=files, stream=True)
-            response.raise_for_status()
+            route = "rembg"
+            response = api_request(route=route, files=files)
             image_rembg_bytes = response.content
             # im = io.BytesIO(response.content)
             # image_rembg = PILImage.open(im).convert('RGB')
@@ -87,23 +81,22 @@ for i, tab in enumerate(tabs):
         if image_rembg_bytes is not None:
             # Extract and display colors
             files = {'file': image_rembg_bytes}
-            response = requests.post(API_ROUTES["colors"], files=files, stream=True)
-            response.raise_for_status()
+            route = "colors"
+            response = api_request(route=route, files=files)
             colors_json = response.json()
             system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors_json}")
             colors = colors_json['colors']
-            columns = st.columns(len(colors))
-            colors_name = [color['name'] for color in colors]
-            colors_hex = [color['hex'] for color in colors]
+            columns = st.columns(4)
             for j, column in enumerate(columns):
                 with column:
-                    hex = colors_hex[j]
-                    name = colors_name[j]
-                    st.color_picker(label=name, value=hex, key=f"color_picker_{i}_{j}")
+                    color = colors[j]
+                    hex = color['hex']
+                    # name = color['name']
+                    st.color_picker(label=hex, value=hex, key=f"color_picker_{i}_{j}", label_visibility='hidden')
                     default = True if j == 0 else False
                     picked = st.checkbox(label=f"color_choice_{i}_{j}", value=default, label_visibility="hidden")
                     if picked:
-                        chosen_colors.append(colors[j])
+                        chosen_colors.append(color)
 
 if len(chosen_colors) > 0:
     width = 500
@@ -131,9 +124,9 @@ if submitted:
             # Check outfit for matches
             with st.spinner("Checking for a match..."):
                 try:
-                    body = {"colors": chosen_colors}
-                    response = requests.post(API_ROUTES["matches"], json=body)
-                    response.raise_for_status()
+                    json = {"colors": chosen_colors}
+                    route = "matches"
+                    response = api_request(route=route, json=json)
                     matches = response.json()
                     matches = matches['matches']
                     system_activity(f"MATCHING - Matches found - {matches}")
@@ -155,8 +148,9 @@ if submitted:
         else:
             st.warning("No colors selected - Please take your image(s) and select some colors before continuing")
 
+st.markdown('##')
 # Show feedback link
 with st.container():
-    st.write("<a href='https://forms.gle/PTqChvC2sJUB5B6NA'>Give Feedback</a>", unsafe_allow_html=True)
+    st.link_button(":gift: Give Feedback!", "https://forms.gle/PTqChvC2sJUB5B6NA", use_container_width=True)
 
 system_activity("END")

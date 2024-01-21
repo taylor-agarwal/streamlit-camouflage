@@ -7,6 +7,8 @@ if os.environ.get("ENVIRONMENT") is None:
 
 ENVIRONMENT = os.environ.get("ENVIRONMENT")
 
+DIRECTORY_PATH = os.path.dirname(os.path.dirname(__file__))
+
 # Declare API endpoints
 if ENVIRONMENT == "prod":
     API_ENDPOINT = os.environ.get("API_ENDPOINT")
@@ -49,16 +51,29 @@ OUTFIT_DESCRIPTIONS = {
 
 HIDE_FOOTER_STYLE = """
     <style>
+    header {visibility: hidden;}
     footer {visibility: hidden;} 
     #MainMenu {visibility: hidden;} 
+    .block-container {
+                    padding-top: 1rem;
+                    padding-bottom: 0rem;
+                }
     </style>  
 """
 
+# From https://github.com/streamlit/streamlit/issues/5003#issuecomment-1276611218
+COLUMN_STYLE = '''<style>
+[data-testid="column"] {
+    width: calc(25% - 1rem) !important;
+    flex: 1 1 calc(25% - 1rem) !important;
+    min-width: calc(25% - 1rem) !important;
+}
+</style>'''
+
 TITLE_HTML = """
 <center>
-<h1>Welcome to Camouflage!</h1>
-<h5><em>Helping the Colorblind Blend In</em></h5>
-<text>If you do not see the logo above, please refresh the page</text>
+<img src="app/static/logo.png" width=50% /><br>
+<em>Helping the Colorblind Blend In</em>
 </center>
 """
 
