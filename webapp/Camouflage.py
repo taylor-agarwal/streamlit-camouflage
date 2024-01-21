@@ -8,7 +8,7 @@ from PIL import Image
 
 sys.path.insert(0, ".")
 
-from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, OUTFIT_DESCRIPTIONS, COLUMN_STYLE
+from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, OUTFIT_DESCRIPTIONS, COLUMN_STYLE, STATEMENT_OUTFITS
 from webapp.utils.webutils import get_color_rect, api_request
 
 # TODO: Make it so if all pixels are black, it returns the whole black image
@@ -46,6 +46,8 @@ system_activity("START")
 st.markdown(HIDE_FOOTER_STYLE, unsafe_allow_html=True)
 
 st.write(COLUMN_STYLE, unsafe_allow_html=True)
+
+st.markdown("#")
 
 st.write(TITLE_HTML, unsafe_allow_html=True)
 
@@ -100,18 +102,15 @@ for i, tab in enumerate(tabs):
 
 if len(chosen_colors) > 0:
     width = 500
-    height = 200
+    height = 100
     for c in chosen_colors:
         c['pct'] = 1 / len(chosen_colors)
     rect = get_color_rect(colors=chosen_colors, width=width, height=height)
-    _, col, _ = st.columns([1, 4, 1])
-    with col:
-        with st.container(border=True):
-            st.image(rect, use_column_width=True)
+    with st.container(border=True):
+        st.image(rect, use_column_width=True)
 
 submitted = st.button("Check My Outfit!", use_container_width=True)
 
-# TODO: Consider storing colors and only rerunning above lines if the images change - st.session_state colors with callback on images on_change
 # Display the colors from the items
 # https://blog.streamlit.io/create-a-color-palette-from-any-image/ 
 
@@ -135,16 +134,20 @@ if submitted:
                     st.error("Unable to check a match. Please try again.")
                     st.stop()
                 
-                st.header("This outfit is...")
-                for match in matches:
-                    st.subheader(match, help=OUTFIT_DESCRIPTIONS[match])
-
                 if len(matches) > 0:
                     st.header("It's a match!")
+                    if all([match in STATEMENT_OUTFITS for match in matches]):
+                        st.write("""Note: This outfit may be considered a "statement", so wear it only if you're sure about it.""")
                     system_activity("RESULT - Match")
                 else:
                     st.header("It's not a match :(")
                     system_activity("RESULT - No Match")
+
+                st.subheader("This outfit is...")
+                for match in matches:
+                    st.text(match, help=OUTFIT_DESCRIPTIONS[match])
+
+
         else:
             st.warning("No colors selected - Please take your image(s) and select some colors before continuing")
 

@@ -56,7 +56,7 @@ HIDE_FOOTER_STYLE = """
     #MainMenu {visibility: hidden;} 
     .block-container {
                     padding-top: 1rem;
-                    padding-bottom: 0rem;
+                    padding-bottom: 1rem;
                 }
     </style>  
 """
@@ -78,3 +78,5 @@ TITLE_HTML = """
 """
 
 CLOTHING_NUMBER_CHOICES = [2, 3, 4]
+
+STATEMENT_OUTFITS = ["Contrast", "Summer", "Winter"]
