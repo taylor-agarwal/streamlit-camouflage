@@ -27,7 +27,7 @@ COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 WORKDIR /app
 
 COPY webapp /app/webapp
-COPY images /app/images
+COPY .streamlit /app/.streamlit
 
 EXPOSE 8501
 
