@@ -3,6 +3,7 @@ from io import BytesIO
 from typing import Dict, List, Tuple, NewType
 import logging
 
+import cv2
 import numpy as np
 from PIL import Image as PILImage
 from rembg import remove, new_session
@@ -74,18 +75,26 @@ class Clothing:
         pixels = np.array([pixel for row in np.array(self.image) for pixel in row if sum(pixel) != 0])
     
         # Find clusters of colors to determine dominant colors
-        color_cluster = KMeans(n_clusters=n, random_state=1, n_init=10).fit(pixels)
-        cluster, colors = color_cluster, color_cluster.cluster_centers_
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TermCriteria_MAX_ITER, 200, 0.1)
+        _, labels, centers = cv2.kmeans(
+            data=pixels.astype(np.float32), 
+            K=n, 
+            bestLabels=None, 
+            criteria=criteria, 
+            attempts=10,
+            flags=cv2.KMEANS_PP_CENTERS
+        )
+        dominant_colors = centers
         
         # Compute the percent of the pixels containing that color
-        color_labels = np.arange(0, len(np.unique(cluster.labels_)) + 1)
-        (color_hist, _) = np.histogram(cluster.labels_, bins = color_labels)
+        color_labels = np.arange(0, len(np.unique(labels)) + 1)
+        (color_hist, _) = np.histogram(labels, bins = color_labels)
         color_hist = color_hist.astype("float")
         color_hist /= color_hist.sum()
 
         # Save the color and the percent of pixels with that color
         image_colors = dict()
-        pct_colors = sorted([(percent, color) for percent, color in zip(color_hist, colors)])[::-1]
+        pct_colors = sorted([(percent, color) for percent, color in zip(color_hist, dominant_colors)])[::-1]
         for pct, color in pct_colors:
             color = tuple(color.tolist())
             image_colors[color] = pct
