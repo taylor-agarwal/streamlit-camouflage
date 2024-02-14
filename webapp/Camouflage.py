@@ -1,18 +1,13 @@
 import logging
 import sys
-from typing import List
 
 import numpy as np
 import streamlit as st
-from PIL import Image
 
 sys.path.insert(0, ".")
 
 from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, OUTFIT_DESCRIPTIONS, COLUMN_STYLE, STATEMENT_OUTFITS
 from webapp.utils.webutils import get_color_rect, api_request
-
-# TODO: Make it so if all pixels are black, it returns the whole black image
-# TODO: Improve the theme (white and light green/tan?)
 
 # Initialize logger
 logger = logging.getLogger(__name__)
@@ -77,9 +72,6 @@ for i, tab in enumerate(tabs):
             route = "rembg"
             response = api_request(route=route, files=files)
             image_rembg_bytes = response.content
-            # im = io.BytesIO(response.content)
-            # image_rembg = PILImage.open(im).convert('RGB')
-            # st.image(image_rembg)
         if image_rembg_bytes is not None:
             # Extract and display colors
             files = {'file': image_rembg_bytes}
