@@ -4,6 +4,7 @@ import sys
 import numpy as np
 import streamlit as st
 from streamlit_image_coordinates import streamlit_image_coordinates
+from PIL import Image
 
 sys.path.insert(0, ".")
 
@@ -21,6 +22,9 @@ logging.basicConfig(
 if 'session_num' not in st.session_state:
     id = np.random.randint(1, 999999999)
     st.session_state['session_num'] = id
+
+if 'colors' not in st.session_state:
+    st.session_state['colors'] = []
 
 # Logging message types
 def user_activity(message):
@@ -49,46 +53,29 @@ st.write(PAGE_HEADER_HTML, unsafe_allow_html=True)
 
 st.markdown("##")
 
-# User select number of images
-num_images = st.selectbox("Number of Clothing Items", CLOTHING_NUMBER_CHOICES, on_change=user_activity, args=("NUMBER INPUT - Number of items changed",))
-system_activity(f"NUMBER INPUT - {num_images} items selected")
+# Generate camera input dialogues
+st.subheader("1️⃣ Take a picture of your outfit")
+uploaded_image = st.camera_input(f"image", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - Image changed",))
+if uploaded_image is not None:
+    st.subheader("2️⃣ Touch the image below to pick out colors")
+    image = Image.open(uploaded_image)
+    image_ndarray = np.array(image)
+    coords = streamlit_image_coordinates(image_ndarray)
+    if coords:
+        color = image_ndarray[coords['y'], coords['x']]
+        c = {
+            "r": float(color[0]), 
+            "g": float(color[1]), 
+            "b": float(color[2]), 
+            "hex": "",
+            "pct": 0.0,
+            "name": ""
+        }
+        if c not in st.session_state['colors']:
+            st.session_state['colors'].append(c)
 
-tabs = None
-if int(num_images) > 0:
-    tabs = st.tabs([f"Item {i+1}" for i in range(num_images)])
-
-chosen_colors = []
-for i, tab in enumerate(tabs):
-    with tab:
-        # Generate camera input dialogues
-        image = st.camera_input(f"image-{i+1}", label_visibility="hidden", on_change=user_activity, args=(f"IMAGE CAPTURE - {i+1} - Image changed",))
-        image_rembg_bytes = None
-        if image is not None:
-            # Remove background from image
-            files = {"file": image}
-            route = "rembg"
-            response = api_request(route=route, files=files)
-            image_rembg_bytes = response.content
-        if image_rembg_bytes is not None:
-            # Extract and display colors
-            files = {'file': image_rembg_bytes}
-            route = "colors"
-            response = api_request(route=route, files=files)
-            colors_json = response.json()
-            system_activity(f"COLOR EXTRACTION - {i+1} - Colors {colors_json}")
-            colors = colors_json['colors']
-            columns = st.columns(4)
-            for j, column in enumerate(columns):
-                with column:
-                    color = colors[j]
-                    hex = color['hex']
-                    # name = color['name']
-                    st.color_picker(label=hex, value=hex, key=f"color_picker_{i}_{j}", label_visibility='hidden')
-                    default = True if j == 0 else False
-                    picked = st.checkbox(label=f"color_choice_{i}_{j}", value=default, label_visibility="hidden")
-                    if picked:
-                        chosen_colors.append(color)
-
+chosen_colors = [c.copy() for c in st.session_state['colors']]
+submitted = False
 if len(chosen_colors) > 0:
     width = 500
     height = 100
@@ -98,7 +85,7 @@ if len(chosen_colors) > 0:
     with st.container(border=True):
         st.image(rect, use_column_width=True)
 
-submitted = st.button("Check My Outfit!", use_container_width=True)
+    submitted = st.button("3️⃣ Check My Outfit!", use_container_width=True)
 
 # Display the colors from the items
 # https://blog.streamlit.io/create-a-color-palette-from-any-image/ 
@@ -132,9 +119,10 @@ if submitted:
                     st.header("It's not a match :(")
                     system_activity("RESULT - No Match")
 
-                st.subheader("This outfit is...")
                 for match in matches:
-                    st.text(match, help=OUTFIT_DESCRIPTIONS[match])
+                    with st.container(border=True):
+                        st.markdown(f"<center><h3>{match}</h3></center>", unsafe_allow_html=True)
+                        st.write(OUTFIT_DESCRIPTIONS[match])
 
 
         else:
