@@ -77,6 +77,22 @@ TITLE_HTML = """
 </center>
 """
 
+PAGE_HEADER_HTML = """
+<div class="banner">
+    <img src="app/static/banner.png" alt="Banner Image">
+</div>
+<style>
+    .banner {
+        width: 100%;
+        overflow: hidden;
+    }
+    .banner img {
+        width: 100%;
+        object-fit: cover;
+    }
+</style>
+"""
+
 CLOTHING_NUMBER_CHOICES = [2, 3, 4]
 
 STATEMENT_OUTFITS = ["Contrast", "Summer", "Winter"]

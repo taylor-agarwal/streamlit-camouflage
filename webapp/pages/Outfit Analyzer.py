@@ -3,10 +3,11 @@ import sys
 
 import numpy as np
 import streamlit as st
+from streamlit_image_coordinates import streamlit_image_coordinates
 
 sys.path.insert(0, ".")
 
-from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, CLOTHING_NUMBER_CHOICES, OUTFIT_DESCRIPTIONS, COLUMN_STYLE, STATEMENT_OUTFITS
+from webapp.utils.constants import HIDE_FOOTER_STYLE, PAGE_HEADER_HTML, CLOTHING_NUMBER_CHOICES, OUTFIT_DESCRIPTIONS, COLUMN_STYLE, STATEMENT_OUTFITS
 from webapp.utils.webutils import get_color_rect, api_request
 
 # Initialize logger
@@ -44,7 +45,7 @@ st.write(COLUMN_STYLE, unsafe_allow_html=True)
 
 st.markdown("#")
 
-st.write(TITLE_HTML, unsafe_allow_html=True)
+st.write(PAGE_HEADER_HTML, unsafe_allow_html=True)
 
 st.markdown("##")
 
