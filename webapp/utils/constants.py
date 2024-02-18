@@ -64,9 +64,9 @@ HIDE_FOOTER_STYLE = """
 # From https://github.com/streamlit/streamlit/issues/5003#issuecomment-1276611218
 COLUMN_STYLE = '''<style>
 [data-testid="column"] {
-    width: calc(25% - 1rem) !important;
-    flex: 1 1 calc(25% - 1rem) !important;
-    min-width: calc(25% - 1rem) !important;
+    width: calc(50% - 1rem) !important;
+    flex: 1 1 calc(50% - 1rem) !important;
+    min-width: calc(50% - 1rem) !important;
 }
 </style>'''
 
@@ -92,7 +92,5 @@ PAGE_HEADER_HTML = """
     }
 </style>
 """
-
-CLOTHING_NUMBER_CHOICES = [2, 3, 4]
 
 STATEMENT_OUTFITS = ["Contrast", "Summer", "Winter"]
