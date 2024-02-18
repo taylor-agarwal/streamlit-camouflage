@@ -1,16 +1,22 @@
 version: '3'
 services:
-  playground-web-backend:
-    image: streamlit-camouflage-backend:latest
+  camouflage-backend:
+    build: 
+      context: .
+      dockerfile: backend.dockerfile
     environment:
       PORT: 8080
+      ADDRESS: 0.0.0.0
     ports:
       - 8080:8080
-  playground-web-frontend:
-    image: streamlit-camouflage-frontend:latest
+  camouflage-frontend:
+    build: 
+      context: .
+      dockerfile: frontend.dockerfile
     environment:
       PORT: 8501
+      ADDRESS: 0.0.0.0
     ports:
       - 8501:8501
     links:
-      - playground-web-backend
+      - camouflage-backend

@@ -2339,6 +2339,21 @@ watchdog = {version = ">=2.1.5", markers = "platform_system != \"Darwin\""}
 snowflake = ["snowflake-connector-python (>=2.8.0)", "snowflake-snowpark-python (>=0.9.0)"]
 
 [[package]]
+name = "streamlit-image-coordinates"
+version = "0.1.6"
+description = "Streamlit component that displays an image and returns the coordinates when you click on it"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "streamlit-image-coordinates-0.1.6.tar.gz", hash = "sha256:2327599727243a5ad9798e5767b624ab4d26985f606c6be435145eb1c4127d1d"},
+    {file = "streamlit_image_coordinates-0.1.6-py3-none-any.whl", hash = "sha256:56b299c38c8c9aaa2fd724f12bc3b81017d01332a242152e10eeb63dffd50dd6"},
+]
+
+[package.dependencies]
+jinja2 = "*"
+streamlit = ">=1.2"
+
+[[package]]
 name = "sympy"
 version = "1.12"
 description = "Computer algebra system (CAS) in Python"
@@ -2637,4 +2652,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.9.7 || >3.9.7,<3.11"
-content-hash = "95ec4fe56e6742f92f376efd3208a757a83a95d5d8c261c6d30477f230b10fd7"
+content-hash = "7c1080e3a339a6ecefeb24c4745e345d0b035122b1a7f0a6fd8afe9bc62bee8c"

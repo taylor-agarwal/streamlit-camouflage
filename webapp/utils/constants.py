@@ -64,9 +64,9 @@ HIDE_FOOTER_STYLE = """
 # From https://github.com/streamlit/streamlit/issues/5003#issuecomment-1276611218
 COLUMN_STYLE = '''<style>
 [data-testid="column"] {
-    width: calc(25% - 1rem) !important;
-    flex: 1 1 calc(25% - 1rem) !important;
-    min-width: calc(25% - 1rem) !important;
+    width: calc(50% - 1rem) !important;
+    flex: 1 1 calc(50% - 1rem) !important;
+    min-width: calc(50% - 1rem) !important;
 }
 </style>'''
 
@@ -77,6 +77,20 @@ TITLE_HTML = """
 </center>
 """
 
-CLOTHING_NUMBER_CHOICES = [2, 3, 4]
+PAGE_HEADER_HTML = """
+<div class="banner">
+    <img src="app/static/banner.png" alt="Banner Image">
+</div>
+<style>
+    .banner {
+        width: 100%;
+        overflow: hidden;
+    }
+    .banner img {
+        width: 100%;
+        object-fit: cover;
+    }
+</style>
+"""
 
 STATEMENT_OUTFITS = ["Contrast", "Summer", "Winter"]
