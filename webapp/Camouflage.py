@@ -1,4 +1,8 @@
+import sys
+
 import streamlit as st
+
+sys.path.insert(0, ".")
 
 from webapp.utils.constants import HIDE_FOOTER_STYLE, TITLE_HTML, COLUMN_STYLE
 

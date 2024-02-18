@@ -1,7 +1,10 @@
 import os
 import pathlib
+import sys
 
 import streamlit as st
+
+sys.path.insert(0, ".")
 
 from webapp.utils.constants import PAGE_HEADER_HTML, HIDE_FOOTER_STYLE, COLUMN_STYLE
 
