@@ -158,6 +158,7 @@ if st.session_state["page_number"] == 3:
             st.markdown(f"<center><h3>It's not a match :(</h3></center>", unsafe_allow_html=True)
             system_activity("RESULT - No Match")
         else:
+            st.markdown(f"<center><h3>It's a match!<br>Your outfit met the following criteria:</h3></center>", unsafe_allow_html=True)
             for match in matches:
                 with st.container(border=True):
                     st.markdown(f"<center><h3>{match}</h3></center>", unsafe_allow_html=True)

@@ -36,16 +36,19 @@ OUTFIT_DESCRIPTIONS = {
 """,
     "Contrast": """
 - At least one warm color
-- Both dark and bright colors present
+- Both dark and bright colors present  
+**WARNING:** This is considered a bold outfit type, so only wear it if you are sure about it
 """,
     "Summer": """
 - At least two warm colors
 - At least one bright color
-- At most one dark color
+- At most one dark color  
+**WARNING:** This is considered a bold outfit type, so only wear it if you are sure about it
 """,
     "Winter": """
 - At least one dark color
-- No bright colors
+- No bright colors  
+**WARNING:** This is considered a bold outfit type, so only wear it if you are sure about it
 """
 }
 
